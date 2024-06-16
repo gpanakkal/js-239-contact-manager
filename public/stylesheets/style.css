@@ -1,0 +1,154 @@
+body {
+  font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+  color: #333333;
+}
+
+h1, h2, h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+.container {
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.app.container {
+  max-width: 1170px;
+}
+
+.bs-header {
+  display: block;
+  color: #CDBFE3;
+  background-color: #6f5499;
+  font-size: 20px;
+  padding: 30px 15px;
+  position: relative;
+  text-align: center;
+}
+
+.bs-header h1 {
+  font-size: 36px;
+  color: #fff;
+  font-weight: normal;
+  margin-top: 0;
+}
+
+.bs-header p {
+  font-weight: 300;
+  line-height: 1.4;
+  margin-bottom: 0;
+}
+
+a {
+  text-decoration: none;
+  color: #428bca;
+}
+
+ul.container {
+  display: block;
+}
+
+.actions {
+  display: flex;
+  flex-direction: row;
+}
+
+.actions > * {
+  display: flex;
+}
+
+.actions.contact {
+  min-height: 20px;
+  gap: 15px;
+}
+
+.actions.contact > * {
+  min-height: 20px;
+  justify-content: start;
+}
+
+.actions.home {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+  padding: 19px;
+  min-height: 20px;
+  background-color: #F5F5F5;
+}
+
+.actions.home > * {
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.btn {
+  color: #6f5499;
+  background-color: #fff;
+  /* font-size: 18px; */
+  padding: 6px 12px;
+  border: 1px solid #6f5499;
+  border-radius: 4px;
+}
+
+.btn:hover {
+  color: #fff;
+  background-color: #6f5499;
+}
+
+.btn.large {
+  /* color: #6f5499;
+  background-color: #fff; */
+  font-size: 18px;
+  padding: 10px 16px;
+  /* border: 1px solid #6f5499; */
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+.btn.delete:hover {
+  background-color: rgb(216, 108, 108);
+  border-color: rgb(216, 108, 108);
+}
+
+.contact-name-search {
+  min-height: 20px;
+  font-size: 14px;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+}
+
+#contact-list {
+  display: grid;
+  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 25%));
+  padding: 15px;
+}
+
+.contact-card {
+  aspect-ratio: 1;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-card dl {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  /* flex-grow: 1; */
+  display: block;
+}
+
+.contact-card dt {
+  font-weight: bold;
+}
+
+.contact-card dd, .contact-card dt {
+  line-height: 1.43;
+}
+
+.contact-card h3 {
+  font-size: 24px;
+  font-weight: 500;
+  
+}
