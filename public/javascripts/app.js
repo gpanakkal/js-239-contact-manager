@@ -53,17 +53,17 @@ class App {
   }
 
   bindEvents() {
-    const homeActionBar = select('.home.actions');
-    homeActionBar.addEventListener('click', this.navAddContact.bind(this));
-    homeActionBar.addEventListener('input', this.handleSearchInput.bind(this));
+    // const homeActionBar = select('.home.actions');
+    select('.btn.add-contact').addEventListener('click', this.navAddContact.bind(this));
+    select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
   }
 
-  // replaces the app container entirely
+  // re-render the entire app container
   draw(...templates) {
-    const appContainer = select('#app-container');
+    // const appContainer = select('#app-container');
     // const previousElements = [...bodyContainer.children];
-    appContainer.innerHTML = templates[0];
-    templates.slice(1).forEach((template) => appContainer.insertAdjacentHTML('beforeend', template));
+    this.container.innerHTML = templates[0];
+    templates.slice(1).forEach((template) => this.container.insertAdjacentHTML('beforeend', template));
     this.bindEvents();
     // previousElements.forEach((element) => element.remove());
   };
@@ -73,65 +73,58 @@ class App {
     this.draw(homeActions(), contactList({ contacts: this.contacts }));
   }
 
+  // re-render only the contact list
   drawContacts() {
-    const appContainer = select('#app-container');
+    // const appContainer = select('#app-container');
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
     const newList = this.templates.contactList({ contacts: this.contacts });
-    appContainer.insertAdjacentHTML('beforeend', newList);
+    this.container.insertAdjacentHTML('beforeend', newList);
   }
 
+  // render contacts that match the search
   drawMatchingContacts(contacts, searchValue) {
-    const appContainer = select('#app-container');
+    // const appContainer = select('#app-container');
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
     const newList = this.templates.contactList({ contacts, searchValue });
-    appContainer.insertAdjacentHTML('beforeend', newList);
+    this.container.insertAdjacentHTML('beforeend', newList);
   }
 
   drawCreateContact() {
-
+    const createContactPage = this.templates.createContact();
+    this.container.innerHTML = createContactPage;
   }
 
   navHome(e) {
     e.preventDefault();
-    const { href, origin } = window.location;
-    const anchorLink = e.target.getAttribute('href');
-    const navPath = helpers.stringSubtract(href, origin);
-    console.log({navPath, anchorLink});
+    // const { href, origin } = window.location;
+    // const anchorLink = e.target.getAttribute('href');
+    // const navPath = helpers.stringSubtract(href, origin);
+    // console.log({navPath, anchorLink});
     this.drawHome();
     // history.pushState({}, "", navPath);
   }
 
   navAddContact(e) {
-    const addContactButton = select('.btn.add-contact');
-    console.log({navaddtarget: e.target, addContactButton, isSame: e.target === addContactButton})
-    if (e.target !== addContactButton) return;
+    // const addContactButton = select('.btn.add-contact');
+    // console.log({navaddtarget: e.target, addContactButton, isSame: e.target === addContactButton})
+    // if (e.target !== addContactButton) return;
     e.preventDefault();
-    const { href, origin } = window.location;
-    const anchorLink = e.target.getAttribute('href');
-    const navPath = helpers.stringSubtract(href, origin);
-    console.log({navPath, anchorLink});
+    // const { href, origin } = window.location;
+    // const anchorLink = e.target.getAttribute('href');
+    // const navPath = helpers.stringSubtract(href, origin);
+    // console.log({navPath, anchorLink});
     this.drawCreateContact();
     // history.pushState({}, "", navPath);
   }
 
-  // navigate(target, templateValues = null, e) {
-  //   e.preventDefault();
-  //   console.log({location: window.location})
-  //   const href = e.currentTarget.getAttribute('href');
-  //   console.log(`Navigating to /${href}`);
-  //   this.setBody(this.pages[target](templateValues));
-  //   history.pushState({}, "", href);
-  // }
-  
   handleSearchInput(e) {
-    const field = select('#contact-name-search');
-    if (e.target !== field) return;
+    // const field = select('#contact-name-search');
+    // if (e.target !== field) return;
     const { value } = field;
     const pattern = new RegExp(`${value}`, 'i');
     const matches = this.contacts.filter((contact) => contact.full_name.match(pattern));
-    console.log({matches})
     this.drawMatchingContacts(matches, value);
   }
 }
