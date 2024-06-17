@@ -44,14 +44,23 @@ const setSubtract = (iterator1, iterator2) => {
   return Object.values(output);
 }
 
+const formatNumber = (phoneNumber) => {
+  const num = String(phoneNumber);
+  return num.length === 10 
+    ? num.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
+    : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 $2-$3-$4');
+};
+
 const getFormValues = (e) => [...e.currentTarget.elements]
 .reduce((acc, el) => Object.assign(acc, { [el.name]: el.value }), { });
 
-const formDataToJson = (formData) => {
-  const obj = [...formData.entries()]
-    .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: pair[1] }), {});
-  return JSON.stringify(obj);
-}
+// const formDataToJson = (formData) => {
+//   const obj = [...formData.entries()]
+//     .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: pair[1] }), {});
+//   return JSON.stringify(obj);
+// }
+
+const formToJson = (form) => JSON.stringify(Object.fromEntries(new FormData(form)));
 
 // untested
 const queryString = (formObj) => {
@@ -87,8 +96,9 @@ export {
   arraySubtract,
   stringSubtract,
   setSubtract,
+  formatNumber,
   getFormValues,
-  formDataToJson,
+  formToJson,
   queryString,
   xhrRequest,
 };

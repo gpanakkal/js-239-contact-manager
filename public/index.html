@@ -37,41 +37,43 @@
         <dd>{{email}}</dd>
       </dl>
       <div class="contact actions">
-        <div><a class="btn" href="#contacts/edit/{{id}}">Edit</a></div>
+        <div><a class="btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
         <div><a class="btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
       </div>
     </div>
   </script>
 
   <script id="contactList" type="text/x-handlebars" nonce=''>
-    <div id='contact-list'>
-      {{#if contacts}}
+    {{#if contacts}}
+      <div id='contact-list' class='contact-list-grid'>
         {{#if contacts.length}}
           {{#each contacts}}
             {{> contactCardPartial}}
           {{/each}}
-        {{else}}
-          <div class="no-contacts">
-            <h3>There are no contacts matching {{searchValue}}.</h3>
-          </div>
         {{/if}}
+      </div>
+    {{else}}
+      {{#if searchValue}}
+        <div id="contact-list" class="no-contacts">
+          <h3>There are no contacts matching <strong>{{searchValue}}</strong>.</h3>
+        </div>
       {{else}}
-        <div class="no-contacts">
+        <div id="contact-list" class="no-contacts">
           <h3>There are no contacts yet.</h3>
         </div>
       {{/if}}
-    </div>
+    {{/if}}
   </script>
 
   <script id="manageContactPartial" data-type="partial" type="text/x-handlebars" nonce=''>
     <form id="contact-form">
       <div id="contact-form-grid">
-        <label for="fullName">Full name:</label>
-        <input type="text" name="fullName">
+        <label for="full_name">Full name:</label>
+        <input type="text" name="full_name" value="{{contact?.full_name}}">
         <label for="email">Email address:</label>
-        <input type="email" name="email">
-        <label for="phoneNumber">Telephone number:</label>
-        <input type="text" name="phoneNumber">
+        <input type="email" name="email" value="{{contact.email}}">
+        <label for="phone_number">Telephone number:</label>
+        <input type="tel" name="phone_number">
         <div></div>
         <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
         <button id="contact-form-cancel" class="btn large">Cancel</button>
@@ -79,11 +81,14 @@
     </form>
   </script>
 
+  <script id="contactFormHint" data-type="partial" type="text/x-handlebars" nonce=''>
+    <small class="form-hint">{{message}}</small>
+
+  </script>
+
   <script id="createContact" type="text/x-handlebars" nonce=''>
-    <!-- <div id="create-contact-form"> -->
       <h2 class='page-header'>Create Contact</h2>
       {{> manageContactPartial}}
-    <!-- </div> -->
   </script>
 
   <script id="editContact" type="text/x-handlebars" nonce=''>
