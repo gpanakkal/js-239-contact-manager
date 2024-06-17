@@ -10,35 +10,18 @@
   <script src="/javascripts/handlebars.js"></script>
   <script type="module" src="/javascripts/app.js"></script>
 
-  <script id="placeholderText" type="text/x-handlebars">
-    <article id="placeholder">
-      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Enim sed faucibus turpis in eu mi bibendum. Enim lobortis scelerisque fermentum dui faucibus in ornare quam. Libero id faucibus nisl tincidunt. Fringilla phasellus faucibus scelerisque eleifend donec pretium vulputate sapien nec. Sem integer vitae justo eget magna. Id consectetur purus ut faucibus pulvinar elementum. Malesuada proin libero nunc consequat interdum. Vitae semper quis lectus nulla at volutpat diam ut. Eget arcu dictum varius duis. Tortor posuere ac ut consequat semper. A diam maecenas sed enim ut sem. Volutpat lacus laoreet non curabitur gravida arcu ac. Venenatis cras sed felis eget velit aliquet sagittis id consectetur. Porta lorem mollis aliquam ut porttitor leo. Diam phasellus vestibulum lorem sed risus ultricies. Viverra aliquet eget sit amet tellus cras adipiscing enim. Risus feugiat in ante metus dictum at tempor commodo. Dui sapien eget mi proin sed libero.</p>
-      <br>
-      <br>
-      <p>Viverra justo nec ultrices dui sapien. Sed id semper risus in. Posuere lorem ipsum dolor sit amet consectetur adipiscing. Ultrices gravida dictum fusce ut placerat orci. Cursus euismod quis viverra nibh cras pulvinar mattis. Lacus luctus accumsan tortor posuere ac ut. Iaculis at erat pellentesque adipiscing commodo. Nibh sit amet commodo nulla. A pellentesque sit amet porttitor eget. Lectus urna duis convallis convallis tellus id. Diam ut venenatis tellus in metus vulputate eu scelerisque felis. Morbi quis commodo odio aenean sed adipiscing diam donec adipiscing. Sagittis nisl rhoncus mattis rhoncus urna neque viverra. Vel eros donec ac odio. Senectus et netus et malesuada fames ac turpis egestas. Ipsum dolor sit amet consectetur adipiscing elit. Suspendisse faucibus interdum posuere lorem ipsum dolor. Erat velit scelerisque in dictum non consectetur.</p>
-      <br>
-      <br>
-
-      <p>Sed risus pretium quam vulputate. Faucibus ornare suspendisse sed nisi. Aliquam sem fringilla ut morbi tincidunt augue interdum velit. Cursus risus at ultrices mi tempus imperdiet nulla malesuada pellentesque. Viverra orci sagittis eu volutpat odio facilisis mauris sit amet. Purus viverra accumsan in nisl nisi scelerisque eu ultrices vitae. Massa placerat duis ultricies lacus sed turpis tincidunt. Aenean euismod elementum nisi quis eleifend quam. Interdum velit laoreet id donec ultrices tincidunt arcu non sodales. Non nisi est sit amet. Lorem ipsum dolor sit amet. Nunc vel risus commodo viverra maecenas. Purus sit amet volutpat consequat mauris nunc congue nisi vitae. Sed risus ultricies tristique nulla aliquet enim tortor at auctor. At imperdiet dui accumsan sit amet nulla.</p>
-      <br>
-      <br>
-
-      <p>Pellentesque diam volutpat commodo sed egestas. Amet consectetur adipiscing elit pellentesque habitant morbi tristique senectus et. Aliquet enim tortor at auctor urna nunc id cursus metus. Vitae elementum curabitur vitae nunc sed. Aliquet risus feugiat in ante metus. Dolor sed viverra ipsum nunc aliquet bibendum. Id faucibus nisl tincidunt eget nullam non. Nec dui nunc mattis enim ut tellus. Tristique magna sit amet purus gravida quis. Lectus arcu bibendum at varius vel pharetra vel. Viverra maecenas accumsan lacus vel. Amet purus gravida quis blandit turpis. Vitae nunc sed velit dignissim sodales ut eu. Amet mauris commodo quis imperdiet massa tincidunt nunc. Consequat ac felis donec et odio pellentesque diam volutpat commodo. Venenatis lectus magna fringilla urna porttitor rhoncus dolor purus non. Gravida rutrum quisque non tellus orci ac auctor augue. Nisi scelerisque eu ultrices vitae auctor eu augue ut lectus.</p>
-      <br>
-      <br>
-
-      <p>Duis at consectetur lorem donec massa. Cursus metus aliquam eleifend mi in nulla posuere. Volutpat maecenas volutpat blandit aliquam etiam. Sem integer vitae justo eget magna fermentum iaculis. Aliquet nec ullamcorper sit amet risus nullam eget felis eget. Arcu cursus vitae congue mauris rhoncus aenean vel. Mattis molestie a iaculis at erat pellentesque adipiscing. Ac turpis egestas integer eget aliquet. Feugiat nibh sed pulvinar proin gravida. Viverra adipiscing at in tellus integer feugiat scelerisque varius morbi. Erat pellentesque adipiscing commodo elit at. Aliquam ut porttitor leo a diam sollicitudin. Justo nec ultrices dui sapien eget mi proin. Pellentesque habitant morbi tristique senectus et netus. Molestie at elementum eu facilisis sed odio morbi quis. Dignissim diam quis enim lobortis. Purus viverra accumsan in nisl nisi scelerisque eu ultrices vitae.</p>
-    </article>
-  </script>
-
-  <script id="homeActions" type="text/x-handlebars">
-    <div class="home actions">
-      <div>
-        <a class="btn large add-contact" href="#new">Add Contact</a>
-      </div>
-      <div>
-        <input type="text" id="contact-name-search" class="contact-name-search" placeholder="Search">
-      </div>
+  <script id="homeActions" data-type="partial" type="text/x-handlebars">
+    <div>
+      <a class="btn large add-contact" href="#contacts/new">Add Contact</a>
+    </div>
+    <div>
+      <input 
+        name="contact-name-search" 
+        id="contact-name-search" 
+        class="contact-name-search" 
+        placeholder="Search"
+      >
+    </div>
   </script>
 
   <script id="contactCardPartial" data-type="partial" type="text/x-handlebars">
@@ -56,8 +39,11 @@
       </div>
     </div>
   </script>
-  
-  <script id="contactList" type="text/x-handlebars">
+
+  <script id="homePage" type="text/x-handlebars">
+    <div class="home actions">
+      {{> homeActions}}
+    </div>
     <div id='contact-list'>
       {{#each contacts}}
         {{> contactCardPartial}}
@@ -91,7 +77,7 @@
       <p>Using Backbone.js, Localstorage, RequireJS, Handlebars, and Bootstrap</p>
     </div>
   </header>
-  <div class="app container">
+  <div id="app-container" class="app container">
 
   </div>
 </body>

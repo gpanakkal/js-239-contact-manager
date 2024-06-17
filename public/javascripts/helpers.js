@@ -1,6 +1,6 @@
 const select = (selector) => document.querySelector(selector);
 
-const selectAll = (selector) => [...document.querySelector(selector)];
+const selectAll = (selector) => [...document.querySelectorAll(selector)];
 
 // create elements
 const create = (tag, attributes = {}, properties = {}) => {
@@ -10,15 +10,39 @@ const create = (tag, attributes = {}, properties = {}) => {
   return el;
 }
 
-// add the new elements, then remove the previous ones once they finish transitioning in
-const setBody = (templates) => {
-  const bodyContainer = select('.app.container');
-  const previousElements = [...bodyContainer.children];
-  templates.forEach((template) => bodyContainer
-    .insertAdjacentHTML('beforeend', template));
+const hashIterable = (iterable) => [].reduce
+  .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
 
-  previousElements.forEach((element) => element.remove());
-};
+/**
+ * Given two array-like objects, non-destructively remove each element from iterator1 found in the 
+ * same position in iterator2
+ * @returns an array of remaining values
+ */
+const arraySubtract = (iterator1, iterator2) => {
+  const end = Math.min(iterator1.length, iterator2.length);
+  let output = {...iterator1};
+  for (let i = 0; i < end; i += 1) {
+    if (output[i] === iterator2[i]) delete output[i];
+  }
+  return Object.values(output);
+}
+
+const stringSubtract = (first, second) => arraySubtract(first, second).join('');
+
+/**
+ * Given two array-like objects, immutably remove each element from iterator1 found in iterator2
+ * without respect to position
+ * @returns a non-sparse array of the remaining values
+ */
+const setSubtract = (iterator1, iterator2) => {
+  const end = Math.min(iterator1.length, iterator2.length);
+  let hash = hashIterable(iterator2);
+  let output = { ...iterator1 };
+  for (let i = 0; i < end; i += 1) {
+    if (output[i] in hash) delete output[i];
+  }
+  return Object.values(output);
+}
 
 const getFormValues = (e) => [...e.currentTarget.elements]
 .reduce((acc, el) => Object.assign(acc, { [el.name]: el.value }), { });
@@ -56,11 +80,13 @@ const xhrRequest = (method, path, headers = {}, data = undefined) => {
   });
 };
 
-module.exports = {
+export {
   select,
   selectAll,
   create,
-  setBody,
+  arraySubtract,
+  stringSubtract,
+  setSubtract,
   getFormValues,
   formDataToJson,
   queryString,
