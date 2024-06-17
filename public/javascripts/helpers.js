@@ -10,6 +10,13 @@ const create = (tag, attributes = {}, properties = {}) => {
   return el;
 }
 
+const htmlToElements = (html) => {
+  const div = create('div', { }, { innerHTML: html });
+  const children = div.children;
+  children.remove();
+  return children;
+}
+
 const hashIterable = (iterable) => [].reduce
   .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
 
@@ -93,6 +100,7 @@ export {
   select,
   selectAll,
   create,
+  htmlToElements,
   arraySubtract,
   stringSubtract,
   setSubtract,
