@@ -10,17 +10,20 @@
   <script src="/javascripts/handlebars.js"></script>
   <script type="module" src="/javascripts/app.js"></script>
 
-  <script id="homeActions" data-type="partial" type="text/x-handlebars">
-    <div>
-      <a class="btn large add-contact" href="#contacts/new">Add Contact</a>
-    </div>
-    <div>
-      <input 
-        name="contact-name-search" 
-        id="contact-name-search" 
-        class="contact-name-search" 
-        placeholder="Search"
-      >
+  <script id="homeActions" type="text/x-handlebars">
+    <div class="home actions">
+      <div>
+        <a class="btn large add-contact" href="#contacts/new">Add Contact</a>
+      </div>
+      <div>
+        <input 
+          name="contact-name-search" 
+          id="contact-name-search" 
+          class="contact-name-search" 
+          placeholder="Search"
+          value="{{searchValue}}"
+        >
+      </div>
     </div>
   </script>
 
@@ -40,14 +43,23 @@
     </div>
   </script>
 
-  <script id="homePage" type="text/x-handlebars">
-    <div class="home actions">
-      {{> homeActions}}
-    </div>
+  <script id="contactList" type="text/x-handlebars">
     <div id='contact-list'>
-      {{#each contacts}}
-        {{> contactCardPartial}}
-      {{/each}}
+      {{#if contacts}}
+        {{#if contacts.length}}
+          {{#each contacts}}
+            {{> contactCardPartial}}
+          {{/each}}
+        {{else}}
+          <div class="no-contacts">
+            <h3>There are no contacts matching {{searchValue}}.</h3>
+          </div>
+        {{/if}}
+      {{else}}
+        <div class="no-contacts">
+          <h3>There are no contacts yet.</h3>
+        </div>
+      {{/if}}
     </div>
   </script>
 

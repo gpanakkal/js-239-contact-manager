@@ -7,30 +7,20 @@ class App {
     this.container = container;
     this.contacts = null;
     this.templates = null;
-    // this.paths = {
-    //   home: this.templates['homePage'],
-    //   edit: this.templates['editContact'],
-    //   create: this.templates['createContact'],
-    // }
     this.initTemplates();
+    this.homeButton = select('a[href="#home"]');
+    this.homeButton.addEventListener('click', this.navHome.bind(this));
+    this.drawHome();
     this.fetchContacts();
-    // this.initPages();
-    // this.draw(this.pages.home());
-    // console.log(this.pages.home())
-    // this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 200);
+    this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 200);
   }
   
   async fetchContacts() {
     const contactData = JSON.parse(await xhrRequest('GET', '/api/contacts', { dataType: 'json' }));
     console.table(contactData);
     this.contacts = contactData;
-    this.draw(this.templates.homePage({contacts: this.contacts}));
-    this.bindEvents();
+    this.drawContacts(contactData);
   }
-
-  // navigateHome() {
-  //   this.setBody(this.pages.home(this.contacts));
-  // }
 
   /**
    * Create a Handlebars template.
@@ -58,44 +48,50 @@ class App {
         const template = this.makeTemplate(script);
         return template === undefined ? acc : Object.assign(acc, { [script.id]: template });
       }, {});
-
+    console.log('Templates:');
     console.table(this.templates);
   }
 
-  // initPages() {
-  //   this.pages = {
-  //     home: (contacts) => [this.templates.homeActions(), this.templates.contactList({ contacts }), this.templates.placeholderText()],
-  //     'contacts/new': () => [this.templates.createContact()],
-  //     'contacts/edit': (contact) => [this.templates.editContact({ contact })],
-  //   };
-  // }
-
-  // unbindEvents() {
-  //   this.newContactButton = select('a[href="#contacts/new"]');
-  //   this.searchBox = select('#contact-name-search');
-  //   this.newContactButton?.removeEventListener('click', this.navAddContact.bind(this));
-  //   this.searchBox?.removeEventListener('input', this.handleSearchInput.bind(this));
-  // }
-
   bindEvents() {
-
-    this.homeButton = select('a[href="#home"]');
-    this.homeButton.addEventListener('click', this.navHome.bind(this));
-  
     const homeActionBar = select('.home.actions');
     homeActionBar.addEventListener('click', this.navAddContact.bind(this));
     homeActionBar.addEventListener('input', this.handleSearchInput.bind(this));
-    console.log('events bound', this.newContactButton)
   }
 
-  // add the new elements, then remove the previous ones once they finish transitioning in
-  draw(template) {
-    const bodyContainer = select('.app.container');
+  // replaces the app container entirely
+  draw(...templates) {
+    const appContainer = select('#app-container');
     // const previousElements = [...bodyContainer.children];
-    bodyContainer.innerHTML = template;
-
+    appContainer.innerHTML = templates[0];
+    templates.slice(1).forEach((template) => appContainer.insertAdjacentHTML('beforeend', template));
+    this.bindEvents();
     // previousElements.forEach((element) => element.remove());
   };
+
+  drawHome() {
+    const { homeActions, contactList } = this.templates;
+    this.draw(homeActions(), contactList({ contacts: this.contacts }));
+  }
+
+  drawContacts() {
+    const appContainer = select('#app-container');
+    const existingList = select('#contact-list');
+    if (existingList) existingList.remove();
+    const newList = this.templates.contactList({ contacts: this.contacts });
+    appContainer.insertAdjacentHTML('beforeend', newList);
+  }
+
+  drawMatchingContacts(contacts, searchValue) {
+    const appContainer = select('#app-container');
+    const existingList = select('#contact-list');
+    if (existingList) existingList.remove();
+    const newList = this.templates.contactList({ contacts, searchValue });
+    appContainer.insertAdjacentHTML('beforeend', newList);
+  }
+
+  drawCreateContact() {
+
+  }
 
   navHome(e) {
     e.preventDefault();
@@ -103,7 +99,7 @@ class App {
     const anchorLink = e.target.getAttribute('href');
     const navPath = helpers.stringSubtract(href, origin);
     console.log({navPath, anchorLink});
-    this.draw(this.templates.homePage({ contacts: this.contacts }));
+    this.drawHome();
     // history.pushState({}, "", navPath);
   }
 
@@ -116,7 +112,7 @@ class App {
     const anchorLink = e.target.getAttribute('href');
     const navPath = helpers.stringSubtract(href, origin);
     console.log({navPath, anchorLink});
-    this.draw(this.templates.createContact());
+    this.drawCreateContact();
     // history.pushState({}, "", navPath);
   }
 
@@ -129,16 +125,14 @@ class App {
   //   history.pushState({}, "", href);
   // }
   
-  handleSearchInput() {
+  handleSearchInput(e) {
     const field = select('#contact-name-search');
     if (e.target !== field) return;
-    const { value } = this.searchBox;
-    console.log('field text: ', value)
+    const { value } = field;
     const pattern = new RegExp(`${value}`, 'i');
-    const matches = this.contacts
-      .filter((contact) => contact.full_name.match(pattern));
-    console.log({pattern, matches})
-    this.draw(this.templates.homePage({ contacts: matches }));
+    const matches = this.contacts.filter((contact) => contact.full_name.match(pattern));
+    console.log({matches})
+    this.drawMatchingContacts(matches, value);
   }
 }
 
