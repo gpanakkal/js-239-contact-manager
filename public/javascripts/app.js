@@ -70,6 +70,7 @@ class App {
     this.container = container;
     this.origin = window.location.origin;
     this.boundClickHandler = this.handleNavClick.bind(this);
+    this.initTemplates();
 
     this.routes = {
       '#home': () => this.drawHome(),
@@ -77,13 +78,13 @@ class App {
       '#contacts/edit/:id': ({ path }) => this.drawEditContactForm(path),
       '#contacts/delete/:id': ({ path }) => this.deleteContact(path),
     };
-    this.initTemplates();
-    this.homeButton = select('#home-button');
+
     this.refresh();
-    this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 300);
+    // this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 300);
+    // this.handleTagInput = debounce(this.handleTagInput.bind(this), 200);
   }
 
-  matchPath(navPath) {
+  matchRoute(navPath) {
     return Object.keys(this.routes)
     .map((path) => ({ path, pattern: App.routeMatchRegex(path) }))
     .find(({ path, pattern }) => navPath.match(pattern))
@@ -106,14 +107,17 @@ class App {
 
   handleNavClick(e) {
     const target = e.currentTarget.getAttribute('href');
-    if (e.currentTarget.classList.contains('delete')) {
-      const confirmed = confirm('Are you sure? This operation is irreversible!');
-      if (!confirmed) {
-        history.back();
-        return;
-      }
-    }
-    this.navTo(target, e);
+    // if (e.currentTarget.classList.contains('delete')) {
+    //   const confirmed = confirm('Are you sure? This operation is irreversible!');
+    //   console.log({confirmed})
+    //   if (confirmed) {
+    //     this.navTo(target, e);
+    //   } else {
+    //     this.navTo('/');
+    //   }
+    // } else {
+      this.navTo(target, e);
+    // }
   }
 
   navTo(path, event = undefined) {
@@ -127,7 +131,7 @@ class App {
 
     // identify the target page and set up the values to pass
     // if the target isn't found, draw a 404 page (or simply navigate home)
-    const target = this.matchPath(path) ?? '#home';
+    const target = this.matchRoute(path) ?? '#home';
 
     // extract the route params to an object
     const params = target.match(/:/) ? App.extractParams(path, target) : { };
@@ -145,12 +149,25 @@ class App {
     if (typeof arg === 'function') {
       this.#state = arg({ ...this.#state });
     } else if (typeof arg === 'object') {
+      console.log('Initial state:');
+      console.log({state: this.#state, update: arg })
       this.#state = { ...this.#state, ...arg };
+      console.log('After update:');
+      console.log({state: this.#state })
+
     }  else return;
+  }
+
+  getPageState() {
+    return this.state.pageVars;
   }
 
   setPageState(pageVars) {
     this.state = { pageVars };
+  }
+
+  updatePageState(updateVars) {
+    this.setPageState({...this.getPageState(), ...updateVars});
   }
 
   resetPageState() {
@@ -158,13 +175,9 @@ class App {
   }
 
   manageHistory(pageState, path) {
-    history.replaceState(this.state.pageVars, '', window.location.pathname);
+    history.replaceState(this.getPageState(), '', window.location.pathname);
     history.pushState(pageState, '', new URL(path, this.origin));
     this.setPageState(pageState);
-  }
-
-  async getContacts() {
-    return await (this.state.contacts ?? this.fetchContacts());
   }
 
   async getTags() {
@@ -173,6 +186,10 @@ class App {
       if (!str) return contact.tags;
       return [str, contact.tags].join(',');
     }, '').split(','))];
+  }
+
+  async getContacts() {
+    return await (this.state.contacts ?? this.fetchContacts());
   }
 
   async fetchContacts() {
@@ -193,25 +210,25 @@ class App {
     console.table(this.templates);
   }
 
-  bindEvents() {
-    
-  }
-
   // re-render the entire app container
-  draw(...templates) {
-    this.container.innerHTML = templates[0];
-    templates.slice(1).forEach((template) => this.container.insertAdjacentHTML('beforeend', template));
+  draw(...htmlTemplates) {
+    this.container.innerHTML = htmlTemplates[0];
+    htmlTemplates.slice(1).forEach((template) => this.container.insertAdjacentHTML('beforeend', template));
+    this.bindNavigationEvents();
+  };
+
+  bindNavigationEvents() {
     selectAll('.navigation').forEach((link) => {
       link.removeEventListener('click', this.boundClickHandler);
       link.addEventListener('click', this.boundClickHandler);
       link.addEventListener('auxclick', (e) => e.preventDefault());
     });
-  };
+  }
 
   async drawHome() {
-    const contacts = await this.getContacts();
-    const { homeActions, contactList } = this.templates;
-    this.draw(homeActions());
+    // const contacts = await this.getContacts();
+    // const { homeActions } = this.templates;
+    this.draw(this.templates.homeActions());
     await this.drawContacts();
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
   }
@@ -235,11 +252,7 @@ class App {
     this.container.insertAdjacentHTML('beforeend', newList);
   }
 
-  async drawAddContactForm() {
-    const tags = await this.getTags();
-    console.log(tags)
-    const createContactPage = this.templates.createContact;
-    this.draw(createContactPage({ tags }));
+  bindContactFormEvents() {
     select('#contact-form').addEventListener('submit', this.submitContactForm.bind(this));
     
     select('#contact-form-cancel').addEventListener('click', (e) => {
@@ -247,7 +260,18 @@ class App {
       this.navTo('/');
     });
 
-    select('#create-tag').addEventListener
+    const tagInput = select('#tag-input');
+    tagInput.addEventListener('input', this.handleTagInput.bind(this));
+    tagInput.addEventListener('keydown', this.handleTagNav.bind(this));
+    tagInput.querySelector
+  }
+
+  async drawAddContactForm() {
+    const tags = await this.getTags();
+    console.log(tags)
+    const createContactPage = this.templates.createContact;
+    this.draw(createContactPage({ tags }));
+    this.bindContactFormEvents();
   }
 
   drawFormHints(form, conditions) {
@@ -308,52 +332,118 @@ class App {
 
   handleSearchInput(e) {
     const field = select('#contact-name-search');
-    if (e.target !== field) return;
+    // if (e.target !== field) return;
     const { value } = field;
     this.drawMatchingContacts(value);
   }
 
-  // handleContactCardClick(e) {
-  //   alert('card clicked')
-  //   const el = e.target;
-  //   if (!el.classList.contains('btn')) return;
-  //   e.preventDefault();
-  //   if (el.classList.contains('edit')) {
-  //     this.drawEditContactForm(e);
-  //   } else if (el.classList.contains('delete')) {
-  //     this.deleteContact(e);
-  //   }
-  // }
+  async processTags(tagString) {
+    const allTags = await this.getTags();
+    const tags = tagString.trim().split(',').map((tag) => tag.trim());
+    const lastTag = tags[tags.length - 1];
+    const currentTags = helpers.hashIterable(tags.slice(0, -1));
+    const tagPattern = new RegExp(lastTag, 'i');
+    const matches = allTags.filter((tag) => !(tag in currentTags) && tag.match(tagPattern));
+    console.log({tagString, lastTag, matches});
+    return [tags, matches];
+  }
+
+  findTag(value) {
+    const selector = `.autocomplete-ui-choice[value="${value}"]`;
+    console.log(selector, select(selector));
+    return select(selector);
+  }
+
+  highlightMatchingTag(tag) {
+    const tagList = selectAll('.autocomplete-ui-choice');
+    tagList.forEach((li) => li.classList.remove('highlighted'));
+    tag?.classList.add('highlighted');
+  }
+
+  async handleTagInput(e) {
+    const field = select('#tag-input');
+    selectAll('li.autocomplete-ui-choice').forEach((el) => el.remove());
+    const { value: tagString } = field;
+    if (tagString.length === 0) return;
+    const [tags, matches] = await this.processTags(tagString);
+
+    this.setPageState({ tagInput: tags, matches, bestMatch: 0 });
+    const suggestions = this.templates.contactFormTags;
+
+    select('ul.autocomplete-ui').innerHTML = suggestions({ tags: matches });
+    const firstTag = select('.autocomplete-ui-choice');
+
+    this.highlightMatchingTag(firstTag);
+  }
+
+  handleTagNav(e) {
+    const field = select('#tag-input');
+    const tagList = selectAll('.autocomplete-ui-choice');
+    const { tagInput, matches, bestMatch } = this.getPageState();
+    const nextIndex = (i) => i >= matches.length - 1 ? 0 : i + 1;
+    const prevIndex = (i) => i <= 0 ? matches.length - 1 : i - 1;
+    const selectNew = (i) => {
+      this.updatePageState({ bestMatch: i });
+      this.highlightMatchingTag(this.findTag(matches[i]));
+    }
+
+    const keyActions = {
+      'ArrowDown': () => {
+        e.preventDefault();
+        selectNew(nextIndex(bestMatch));
+      },
+      'ArrowUp': () => {
+        e.preventDefault();
+        selectNew(prevIndex(bestMatch));
+      },
+      'Tab': () => {
+        if (bestMatch === undefined) return;
+        e.preventDefault();
+        // replace the partial tag with the full one
+        const newTag = this.findTag(bestMatch);
+        console.log({ bestMatch, newTag })
+        const newTagString = [...tagInput.slice(0, -1), newTag].join(', ');
+        field.value = newTagString;
+        selectNew(null);
+      },
+    }
+
+    if (e.key in keyActions) {
+      keyActions[e.key]();
+    }
+  }
 
   async findContact(id) {
     return (await this.getContacts()).find((contact) => String(contact.id) === String(id));
   }
 
   async drawEditContactForm() {
-    const { id } = this.state.pageVars;
-    const tags = await this.getTags();
+    const { id } = this.getPageState();
     const contact = await this.findContact(id);
+    this.updatePageState({ ...contact });
+    const tags = await this.getTags();
     if (!contact) {
       alert(`Invalid id: ${id}`);
       this.navTo('/');
     }
-    this.draw(this.templates.editContact({ contact, tags }));
-    select('#contact-form').addEventListener('submit', this.submitContactForm.bind(this));
 
-    const cancelButton = select('#contact-form-cancel');
-    cancelButton.addEventListener('click', (e) => {
-      e.preventDefault();
-      this.navTo('/');
-    });
+    this.draw(this.templates.editContact({ contact, tags }));
+    this.bindContactFormEvents();
   }
 
   async deleteContact() {
-    const { id } = this.state.pageVars;
+    const { id } = this.getPageState();
     const contact = await this.findContact(id);
     if (!contact) {
       alert(`Invalid id: ${id}`);
       this.navTo('/');
     }
+    
+    const confirmed = confirm('Are you sure? This operation is irreversible!');
+    if (!confirmed) {
+      this.navTo('/');
+      return;
+    } 
 
     try {
       const result = await xhrRequest('DELETE', `/api/contacts/${id}`);

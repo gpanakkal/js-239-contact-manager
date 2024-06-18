@@ -42,7 +42,7 @@
       </dl>
       <div class="contact actions">
         <div><a class="navigation btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
-        <div><a class="navigation btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
+        <div><a class="btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
       </div>
     </div>
   </script>
@@ -87,8 +87,11 @@
         </div>
           <label for="tags">Tags:</label>
           <div class="input-box">
-            <input type='text' name='tags' value="{{contact.tags}}"
-            <select multiple size="1" name="tags" id="tag-select">
+            <input type='text' name='tags' id='tag-input' value="{{contact.tags}}">
+            <div class="autocomplete-wrapper">
+              <ul class="autocomplete-ui">
+              </ul>
+            </div>
           </div>
         <label></label>
         <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
@@ -103,9 +106,8 @@
 
   <script id="contactFormTags" type="text/x-handlebars" nonce=''>
     {{#each tags}}
-      <option value="{{this}}">{{this}}</option>
+      <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
     {{/each}}
-    <option id="create-tag">create new...</option>
   </script>
 
   <script id="createContact" type="text/x-handlebars" nonce=''>

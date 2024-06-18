@@ -96,11 +96,20 @@ const xhrRequest = (method, path, headers = {}, data = undefined) => {
   });
 };
 
+
+const rollOverAccess = (arr, i) => {
+  let index = (i % arr.length);
+  if (index < 0) index = arr.length + index;
+  return arr[index];
+}
+
+
 export {
   select,
   selectAll,
   create,
   htmlToElements,
+  hashIterable,
   arraySubtract,
   stringSubtract,
   setSubtract,
@@ -109,4 +118,5 @@ export {
   formToJson,
   queryString,
   xhrRequest,
+  rollOverAccess,
 };

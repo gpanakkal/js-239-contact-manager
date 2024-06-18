@@ -275,3 +275,29 @@ a {
 input.invalid {
   border-color: #b94a48;
 }
+
+.autocomplete-wrapper {
+  box-sizing: border-box;
+  border: 1px solid #eee;
+  
+}
+
+.autocomplete-ui-choice {
+  padding: 6px;
+  margin-left: -6px;
+  margin-right: -6px;
+  border-radius: 4px;
+  list-style-type: none;
+}
+
+/* .autocomplete-ui-choice:hover {
+  color: #fff;
+  background-color: #6f5499;
+  cursor: pointer;
+} */
+
+.autocomplete-ui-choice.highlighted {
+  color: #fff;
+  background-color: #6f5499;
+  cursor: pointer;
+}
