@@ -23,19 +23,19 @@ h3 {
 }
 
 @media(min-width: 768px) {
-  #app-container {
+  .container {
     width: 750px;
   }
 }
 
 @media(min-width: 992px) {
-  #app-container {
+  .container {
     width: 970px;
   }
 }
 
 @media(min-width: 1200px) {
-  #app-container {
+  .container {
     width: 1170px;
   }
 }
@@ -48,8 +48,6 @@ h3 {
 }
 
 #app-container > div {
-  /* margin-left: auto;
-  margin-right: auto; */
   margin-left: -15px;
   margin-right: -15px;
 }
@@ -59,7 +57,6 @@ h3 {
   animation-name: slidein;
   animation-iteration-count: 1;
   animation-direction: normal;
-
 }
 
 .bs-header {
@@ -166,12 +163,10 @@ a {
   box-sizing: border-box;
   margin-left: -15px;
   margin-right: -15px;
-  /* padding: 15px; */
   padding-top: 0px;
 }
 
 .contact-card {
-  /* aspect-ratio: 1; */
   background-color: #fff;
   display: flex;
   flex-direction: column;
@@ -184,8 +179,8 @@ a {
   margin-top: 14px;
   box-sizing: border-box;
   margin-bottom: 20px;
-  /* flex-grow: 1; */
   display: block;
+  flex-grow: 1;
 }
 
 .contact-card dt {
@@ -193,21 +188,20 @@ a {
 }
 
 .contact-card dd, .contact-card dt {
-  line-height: 1.43;
+  margin: 8px 0px 8px 0px;
 }
 
 #contact-form-grid {
   display: grid;
   width: 70%;
   grid-template-columns: 0.5fr 0.7fr 0.7fr;
-  grid-template-rows: 34px;
+  grid-template-rows: repeat(auto-fill, 34px);
   grid-gap: 20px;
   padding: 15px;
-  /* align-items: center; */
   margin: auto;
 }
 
-#contact-form-grid > * {
+#contact-form-grid label, #contact-form-grid .input-box > * {
   padding: 6px 12px;
   box-sizing: border-box;
 }
@@ -215,17 +209,38 @@ a {
 #contact-form-grid label {
   text-align: right;
   font-weight: 700;
+  height: 34px;
 }
 
-#contact-form-grid input {
+#contact-form-grid .input-box > input {
   width: 100%;
   height: 34px;
   font-size: 14px;
   color: #555;
   border: 1px solid #ccc;
   border-radius: 4px;
+  box-sizing: border-box;
+}
+
+#contact-form-grid input.invalid {
+  border: 1px solid #b94a48;
+}
+
+#contact-form-grid label.invalid {
+  color: #b94a48;
+}
+
+#contact-form-grid .input-box {
+  width: 100%;
+  box-sizing: border-box;
   grid-column-start: 2;
   grid-column-end: 4;
+  padding: 0px;
+  margin: 0px;
+}
+
+#contact-form-grid small {
+  margin: 0px;
 }
 
 #contact-form-grid button {

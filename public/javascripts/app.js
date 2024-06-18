@@ -1,25 +1,35 @@
 import debounce from './debounce.js';
 import * as helpers from './helpers.js';
-const { select, selectAll, formToJson, xhrRequest } = helpers;
+const { select, selectAll, create, formToJson, xhrRequest } = helpers;
 
 class App {
-  constructor(container) {
-    this.container = container;
-    this.contacts = null;
-    this.templates = null;
-    this.initTemplates();
-    this.homeButton = select('a[href="#home"]');
-    this.homeButton.addEventListener('click', this.navHome.bind(this));
-    this.drawHome();
-    this.fetchContacts().then(() => this.drawContacts(this.contacts));
-    this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 200);
+  static routeMatchRegex(routePath) {
+    const hashReplace = /^#/.test(routePath) ? '#' : '';
+    const patternString = routePath
+      .replace(/^#/, '')
+      .split('/')
+      .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
+      .join('/');
+    return new RegExp(`^${hashReplace}${patternString}/?$`, 'i');
   }
+
+  static pathSegments(path) {
+    return path?.replace(/^#/, '').split('/') ?? null;
+  }
+
+  static extractParams(navPath, routePath) {
+    const routeSegments = App.pathSegments(routePath);
+    const navSegments = App.pathSegments(navPath);
   
-  async fetchContacts() {
-    const contactData = JSON.parse(await xhrRequest('GET', '/api/contacts', { dataType: 'json' }));
-    console.table(contactData);
-    this.contacts = contactData;
-    // this.drawContacts(contactData);
+    return navSegments.reduce((acc, value, i) => {
+      const paramSegment = routeSegments[i];
+      if (!paramSegment.match(/^:/)) return acc;
+      return Object.assign(acc, { [paramSegment.slice(1)]: value });
+    }, {});
+  }
+
+  static logNav(...args) {
+    console.log(new Date().toLocaleTimeString(), JSON.stringify(...args));
   }
 
   /**
@@ -28,7 +38,7 @@ class App {
    * @param {string | HTMLScriptElement} arg a CSS selector or a Handlebars script
    * @returns A Handlebars template function
    */
-  makeTemplate(arg) {
+  static makeTemplate(arg) {
     const script = typeof arg === 'string' ? select(arg) : arg;
     let template = undefined;
     if(script.dataset.type === 'partial') {
@@ -41,11 +51,142 @@ class App {
     return template;
   }
 
+  static formatContacts(contacts) {
+    return contacts.map((contact) => {
+      const formatted = {
+        phone_number: helpers.formatNumber(contact.phone_number),
+        tags: contact.tags?.split(',').join(', '),
+      };
+      return { ...contact, ...formatted };
+    });
+  }
+
+  #state = {
+    contacts: null,
+    pageVars: null,
+  };
+
+  constructor(container) {
+    this.container = container;
+    this.origin = window.location.origin;
+    this.boundClickHandler = this.handleNavClick.bind(this);
+
+    this.routes = {
+      '#home': () => this.drawHome(),
+      '#contacts/new': () => this.drawAddContactForm(),
+      '#contacts/edit/:id': ({ path }) => this.drawEditContactForm(path),
+      '#contacts/delete/:id': ({ path }) => this.deleteContact(path),
+    };
+    this.initTemplates();
+    this.homeButton = select('#home-button');
+    this.refresh();
+    this.handleSearchInput = debounce(this.handleSearchInput.bind(this), 300);
+  }
+
+  matchPath(navPath) {
+    return Object.keys(this.routes)
+    .map((path) => ({ path, pattern: App.routeMatchRegex(path) }))
+    .find(({ path, pattern }) => navPath.match(pattern))
+    ?.path;
+  }
+
+  sameOrigin(path) {
+    return !URL.canParse(path) || new URL(path).origin === this.origin;
+  }
+
+  validPath(path) {
+    return (typeof path === 'string') 
+      && (path.length === 0 || path.match(/(^#\w+)|(^\/$)/))
+      && this.sameOrigin(path);
+  }
+
+  refresh() {
+    this.navTo(window.location.hash);
+  }
+
+  handleNavClick(e) {
+    const target = e.currentTarget.getAttribute('href');
+    if (e.currentTarget.classList.contains('delete')) {
+      const confirmed = confirm('Are you sure? This operation is irreversible!');
+      if (!confirmed) {
+        history.back();
+        return;
+      }
+    }
+    this.navTo(target, e);
+  }
+
+  navTo(path, event = undefined) {
+    // If the link isn't to the same origin, isn't '/', or doesn't have a hash, return
+    if (path && !this.validPath(path)) {
+      alert(`invalid path ${path}`);
+      return;
+    };
+
+    event?.preventDefault();
+
+    // identify the target page and set up the values to pass
+    // if the target isn't found, draw a 404 page (or simply navigate home)
+    const target = this.matchPath(path) ?? '#home';
+
+    // extract the route params to an object
+    const params = target.match(/:/) ? App.extractParams(path, target) : { };
+    App.logNav({ path, target })
+    this.manageHistory(params, path);
+
+    this.routes[target](params);
+  }
+
+  get state() {
+    return this.#state;
+  }
+
+  set state(arg) {
+    if (typeof arg === 'function') {
+      this.#state = arg({ ...this.#state });
+    } else if (typeof arg === 'object') {
+      this.#state = { ...this.#state, ...arg };
+    }  else return;
+  }
+
+  setPageState(pageVars) {
+    this.state = { pageVars };
+  }
+
+  resetPageState() {
+    this.state = { pageVars: null };
+  }
+
+  manageHistory(pageState, path) {
+    history.replaceState(this.state.pageVars, '', window.location.pathname);
+    history.pushState(pageState, '', new URL(path, this.origin));
+    this.setPageState(pageState);
+  }
+
+  async getContacts() {
+    return await (this.state.contacts ?? this.fetchContacts());
+  }
+
+  async getTags() {
+    return [...new Set((await this.getContacts()).reduce((str, contact) => {
+      if (!contact.tags) return str;
+      if (!str) return contact.tags;
+      return [str, contact.tags].join(',');
+    }, '').split(','))];
+  }
+
+  async fetchContacts() {
+    const contactData = JSON.parse(await xhrRequest('GET', '/api/contacts', { dataType: 'json' }));
+    console.table(contactData);
+    this.state.contacts = contactData;
+    return contactData;
+  }
+
   initTemplates() {
     const templateScripts = selectAll('script[type="text/x-handlebars"]');
     this.templates = templateScripts
       .reduce((acc, script) => {
-        const template = this.makeTemplate(script);
+        const template = App.makeTemplate(script);
         return template === undefined ? acc : Object.assign(acc, { [script.id]: template });
       }, {});
     console.log('Templates:');
@@ -53,158 +194,184 @@ class App {
   }
 
   bindEvents() {
-    // const homeActionBar = select('.home.actions');
-    select('.btn.add-contact').addEventListener('click', this.navAddContact.bind(this));
-    select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
+    
   }
 
   // re-render the entire app container
   draw(...templates) {
-    // const appContainer = select('#app-container');
-    // const previousElements = [...bodyContainer.children];
     this.container.innerHTML = templates[0];
     templates.slice(1).forEach((template) => this.container.insertAdjacentHTML('beforeend', template));
-    this.bindEvents();
-    // previousElements.forEach((element) => element.remove());
+    selectAll('.navigation').forEach((link) => {
+      link.removeEventListener('click', this.boundClickHandler);
+      link.addEventListener('click', this.boundClickHandler);
+      link.addEventListener('auxclick', (e) => e.preventDefault());
+    });
   };
 
-  drawHome() {
+  async drawHome() {
+    const contacts = await this.getContacts();
     const { homeActions, contactList } = this.templates;
-    this.draw(homeActions(), contactList({ contacts: this.contacts }));
-    select('#contact-list').addEventListener('click', this.handleContactCardClick.bind(this));
-  }
-
-  navHome(e) {
-    e.preventDefault();
-    this.drawHome();
-  }
-
-  findContact(id) {
-
-  }
-
-  formatContacts(contacts) {
-    return contacts.map((contact) => {
-      const formattedNumber = helpers.formatNumber(contact.phone_number);
-      return { ...contact, phone_number: formattedNumber };
-    });
+    this.draw(homeActions());
+    await this.drawContacts();
+    select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
   }
 
   // re-render only the contact list
-  drawContacts() {
-    this.drawMatchingContacts(this.contacts ?? {}, '');
-    // // const appContainer = select('#app-container');
-    // const existingList = select('#contact-list');
-    // if (existingList) existingList.remove();
-    // const contacts = this.formatContacts(this.contacts);
-    // const newList = this.templates.contactList({ contacts });
-    // this.container.insertAdjacentHTML('beforeend', newList);
+  async drawContacts() {
+    this.drawMatchingContacts();
   }
 
   // render contacts that match the search
-  drawMatchingContacts(contacts, searchValue) {
-    // const appContainer = select('#app-container');
+  async drawMatchingContacts(searchValue) {
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
-    const formatted = this.formatContacts(contacts);
+    let contacts = await this.getContacts();
+    if (searchValue !== undefined) {
+      const pattern = new RegExp(`${searchValue}`, 'i');
+      contacts = contacts.filter((contact) => contact.full_name.match(pattern));
+    }
+    const formatted = App.formatContacts(contacts);
     const newList = this.templates.contactList({ contacts: formatted, searchValue });
     this.container.insertAdjacentHTML('beforeend', newList);
-    select('#contact-list').addEventListener('click', this.handleContactCardClick.bind(this));
   }
 
-  navAddContact(e) {
-    e.preventDefault();
-    this.drawAddContactForm();
-  }
-
-  drawAddContactForm() {
-    const createContactPage = this.templates.createContact();
-    this.container.innerHTML = createContactPage;
-    select('#contact-form').addEventListener('submit', this.createContact.bind(this));
+  async drawAddContactForm() {
+    const tags = await this.getTags();
+    console.log(tags)
+    const createContactPage = this.templates.createContact;
+    this.draw(createContactPage({ tags }));
+    select('#contact-form').addEventListener('submit', this.submitContactForm.bind(this));
     
     select('#contact-form-cancel').addEventListener('click', (e) => {
       e.preventDefault();
-      this.drawHome();
+      this.navTo('/');
     });
+
+    select('#create-tag').addEventListener
   }
 
-  drawFormHints(form) {
-
+  drawFormHints(form, conditions) {
+    selectAll('.form-hint').forEach((hint) => hint.remove());
+    [...form.querySelectorAll('.invalid')]
+      .forEach((input) => input.classList.remove('invalid'));
+    const hint = this.templates.contactFormHint;
+    conditions.forEach(([key, { message }]) => {
+      const location = form.querySelector(`input[name="${key}"]`);
+      const label = form.querySelector(`label[for="${key}"`);
+      location.classList.add('invalid');
+      label.classList.add('invalid');
+      location.insertAdjacentHTML('afterend', hint({ message }));
+    })
   }
 
-  async createContact(e) {
+  validateContactForm(formObj) {
+    const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
+    const conditions = {
+      'full_name': {
+        check: formObj.full_name.trim().length > 0,
+        message: 'You must provide a name.',
+      },
+      'email': {
+        check: !!formObj.email.match(/[\w]+@[\w]+\.\w{2,}/),
+        message: 'Email must have a name, domain, and @ sign.',
+      },
+      'phone_number': {
+        check: !!formObj.phone_number.match(phoneNumberPattern),
+        message: 'Please enter a valid US phone number.',
+      },
+    };
+    const failing = Object.entries(conditions).filter(([key, { check }]) => !check);
+    console.log({formObj, failing})
+    return failing;
+  }
+
+  async submitContactForm(e) {
+    console.log(e);
     e.preventDefault();
     const formObj = Object.fromEntries(new FormData(e.currentTarget));
-    const conditions = [
-      formObj.full_name.trim().length > 0,
-      formObj.email.match(/[\w]+@[\w]+\.\w{2,}/),
-      formObj.phone_number.match(/^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/),
-    ];
-    console.log({formObj, conditions})
-    if (!conditions.every((condition) => condition)) {
-      this.drawFormHints(e.currentTarget);
+    const failedConditions = this.validateContactForm(formObj);
+    if (failedConditions.length) {
+      this.drawFormHints(e.currentTarget, failedConditions);
       return false;
     }
     
     const json = JSON.stringify(formObj);
     console.log(json);
-    const result = await xhrRequest(
-      'POST',
-      '/api/contacts',
-      { 'Content-Type': 'application/json; charset=utf-8' },
-      json,
-    );
-    const newContacts = await this.fetchContacts();
-    this.homeButton.dispatchEvent(new MouseEvent('click'));
-    // alert(!!result ? `Contact created` : 'Failed to create the contact');
+    const [method, path] = formObj.id
+      ? ['PUT', `/api/contacts/${formObj.id}`] 
+      : ['POST', '/api/contacts'];
+    const headers = { 'Content-Type': 'application/json; charset=utf-8' };
+    const result = await xhrRequest(method, path, headers, json);
+    await this.fetchContacts();
+    this.navTo('/');
   }
 
   handleSearchInput(e) {
     const field = select('#contact-name-search');
     if (e.target !== field) return;
     const { value } = field;
-    const pattern = new RegExp(`${value}`, 'i');
-    const matches = this.contacts.filter((contact) => contact.full_name.match(pattern));
-    this.drawMatchingContacts(matches, value);
+    this.drawMatchingContacts(value);
   }
 
-  handleContactCardClick(e) {
-    const el = e.target;
-    if (!el.classList.contains('btn')) return;
-    e.preventDefault();
-    if (el.classList.contains('edit')) {
-      this.drawEditContactForm(e);
-    } else if (el.classList.contains('delete')) {
-      this.deleteContact(e);
+  // handleContactCardClick(e) {
+  //   alert('card clicked')
+  //   const el = e.target;
+  //   if (!el.classList.contains('btn')) return;
+  //   e.preventDefault();
+  //   if (el.classList.contains('edit')) {
+  //     this.drawEditContactForm(e);
+  //   } else if (el.classList.contains('delete')) {
+  //     this.deleteContact(e);
+  //   }
+  // }
+
+  async findContact(id) {
+    return (await this.getContacts()).find((contact) => String(contact.id) === String(id));
+  }
+
+  async drawEditContactForm() {
+    const { id } = this.state.pageVars;
+    const tags = await this.getTags();
+    const contact = await this.findContact(id);
+    if (!contact) {
+      alert(`Invalid id: ${id}`);
+      this.navTo('/');
     }
-  }
+    this.draw(this.templates.editContact({ contact, tags }));
+    select('#contact-form').addEventListener('submit', this.submitContactForm.bind(this));
 
-  async drawEditContactForm(e) {
-    const el = e.target;
-    const href = el.getAttribute('href');
-    const id = href.split('/').slice(-1)[0];
-    const contact = this.contacts.find((contact) => String(contact.id) === id);
-    this.container.innerHTML = this.templates.editContact({ contact });
-
-    select('#contact-form-cancel').addEventListener('click', (e) => {
+    const cancelButton = select('#contact-form-cancel');
+    cancelButton.addEventListener('click', (e) => {
       e.preventDefault();
-      this.drawHome();
+      this.navTo('/');
     });
   }
 
-  async deleteContact(e) {
-    const el = e.target;
-    const href = el.getAttribute('href');
-    const id = href.split('/').slice(-1)[0];
+  async deleteContact() {
+    const { id } = this.state.pageVars;
+    const contact = await this.findContact(id);
+    if (!contact) {
+      alert(`Invalid id: ${id}`);
+      this.navTo('/');
+    }
+
     try {
       const result = await xhrRequest('DELETE', `/api/contacts/${id}`);
-      this.contacts = this.contacts.filter((contact) => String(contact.id) !== id);
+      await this.fetchContacts();
     } catch(e) {
       console.error(e);
+    } finally {
+      location.replace(this.origin);
     }
   }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
   const app = new App(select('#app-container'));
+  history.scrollRestoration = "auto";  
+
+  window.addEventListener('popstate', (e) => {
+    app.refresh();
+  });
+  
 });

@@ -13,7 +13,7 @@
   <script id="homeActions" type="text/x-handlebars" nonce=''>
     <div class="home actions">
       <div>
-        <a class="btn large add-contact" href="#contacts/new">Add Contact</a>
+        <a class="navigation btn large add-contact" href="#contacts/new">Add Contact</a>
       </div>
       <div>
         <input 
@@ -35,10 +35,14 @@
         <dd>{{phone_number}}</dd>
         <dt>Email:</dt>
         <dd>{{email}}</dd>
+        {{#if tags}}
+          <dt>Tags:</dt>
+          <dd>{{tags}}</dd>
+        {{/if}}
       </dl>
       <div class="contact actions">
-        <div><a class="btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
-        <div><a class="btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
+        <div><a class="navigation btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
+        <div><a class="navigation btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
       </div>
     </div>
   </script>
@@ -68,22 +72,40 @@
   <script id="manageContactPartial" data-type="partial" type="text/x-handlebars" nonce=''>
     <form id="contact-form">
       <div id="contact-form-grid">
+        <input type="hidden" name="id" value="{{contact.id}}">
         <label for="full_name">Full name:</label>
-        <input type="text" name="full_name" value="{{contact?.full_name}}">
+        <div class="input-box">
+          <input type="text" name="full_name" value="{{contact.full_name}}">
+        </div>
         <label for="email">Email address:</label>
-        <input type="email" name="email" value="{{contact.email}}">
+        <div class="input-box">
+          <input type="email" name="email" value="{{contact.email}}">
+        </div>
         <label for="phone_number">Telephone number:</label>
-        <input type="tel" name="phone_number">
-        <div></div>
+        <div class="input-box">
+          <input type="tel" name="phone_number" value="{{contact.phone_number}}">
+        </div>
+          <label for="tags">Tags:</label>
+          <div class="input-box">
+            <input type='text' name='tags' value="{{contact.tags}}"
+            <select multiple size="1" name="tags" id="tag-select">
+          </div>
+        <label></label>
         <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
         <button id="contact-form-cancel" class="btn large">Cancel</button>
       </div>
     </form>
   </script>
 
-  <script id="contactFormHint" data-type="partial" type="text/x-handlebars" nonce=''>
+  <script id="contactFormHint" type="text/x-handlebars" nonce=''>
     <small class="form-hint">{{message}}</small>
+  </script>
 
+  <script id="contactFormTags" type="text/x-handlebars" nonce=''>
+    {{#each tags}}
+      <option value="{{this}}">{{this}}</option>
+    {{/each}}
+    <option id="create-tag">create new...</option>
   </script>
 
   <script id="createContact" type="text/x-handlebars" nonce=''>
@@ -95,12 +117,13 @@
     <h2 class='page-header'>Edit Contact</h2>
     {{> manageContactPartial}}
   </script>
+
   <title>Contact Manager</title>
 </head>
 <body>
   <header class="bs-header">
-    <div class="container">
-      <a href="#home">
+    <div class="header container">
+      <a id="home-button" class="navigation" href="/">
         <h1>Contact Manager</h1>
       </a>
       <p>Using Backbone.js, Localstorage, RequireJS, Handlebars, and Bootstrap</p>

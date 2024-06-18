@@ -54,5 +54,26 @@
     "email": "hohga@bjkanb.co",
     "tags": null,
     "id": 8
+  },
+  {
+    "full_name": "to delete",
+    "phone_number": "(100)1111234",
+    "email": "b@a.com",
+    "tags": null,
+    "id": 10
+  },
+  {
+    "full_name": "EDITING",
+    "phone_number": "(100)111-1234",
+    "email": "b@a.com",
+    "tags": null,
+    "id": 11
+  },
+  {
+    "full_name": "test creation",
+    "phone_number": "(800)2049555",
+    "email": "bca@abc.com",
+    "tags": null,
+    "id": 12
   }
 ]
