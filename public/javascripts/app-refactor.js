@@ -1,42 +1,9 @@
-import debounce from './debounce.js';
-import * as helpers from './helpers.js';
+import debounce from './lib/debounce.js';
+import * as helpers from './lib/helpers.js';
 import stateManager from '../../../template_wrapper/public/javascripts/localStorageManager.js';
 const { select, selectAll, create, formToJson, xhrRequest } = helpers;
 
 class App {
-  // router
-  static routeMatchRegex(routePath) {
-    const hashReplace = /^#/.test(routePath) ? '#' : '';
-    const patternString = routePath
-      .replace(/^#/, '')
-      .split('/')
-      .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
-      .join('/');
-    return new RegExp(`^${hashReplace}${patternString}/?$`, 'i');
-  }
-
-  // router
-  static pathSegments(path) {
-    return path?.replace(/^#/, '').split('/') ?? null;
-  }
-
-  // router
-  static extractParams(navPath, routePath) {
-    const routeSegments = App.pathSegments(routePath);
-    const navSegments = App.pathSegments(navPath);
-  
-    return navSegments.reduce((acc, value, i) => {
-      const paramSegment = routeSegments[i];
-      if (!paramSegment.match(/^:/)) return acc;
-      return Object.assign(acc, { [paramSegment.slice(1)]: value });
-    }, {});
-  }
-
-  // router? only if the router has final determination of what to draw
-  static logNav(...args) {
-    console.log(new Date().toLocaleTimeString(), JSON.stringify(...args));
-  }
-
   // split into App (for partials) and TemplateWrapper (for rest)
   /**
    * Create a Handlebars template.
@@ -523,10 +490,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   console.log(`Random number: ${Math.random()}`)
   const app = new App(select('#app-container'));
   history.scrollRestoration = "auto";  
-
-  // delete this
-  window.addEventListener('popstate', (e) => {
-    app.refresh();
-  });
-  
 });
