@@ -238,7 +238,7 @@ import { hashIterable, select, selectAll } from "../lib/helpers.js";
 //   return Object.assign(wrapper, methods);
 // }
 
-const contactForm = `
+const contactForm = /* html */ `
 <script id="contactForm" type="text/x-handlebars" nonce=''>
   <h2 class='page-header'>
     {{#if contact}}Edit{{else}}Create{{/if}} Contact
@@ -273,14 +273,14 @@ const contactForm = `
   </form>
 </script>`;
 
-const contactFormTags = `
+const contactFormTags = /* html */ `
 <script id="contactFormTags" type="text/x-handlebars" nonce=''>
   {{#each tags}}
     <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
   {{/each}}
 </script>`;
 
-const contactFormHint = `
+const contactFormHint = /* html */ `
 <script id="contactFormHint" type="text/x-handlebars" nonce=''>
   <small class="form-hint">{{message}}</small>
 </script>`;

@@ -1,7 +1,7 @@
 import TemplateWrapper from "../classes/TemplateWrapper.js"
 import { select } from "../lib/helpers.js";
 
-const homeBar = `
+const homeBar = /* html */ `
 <script id="homeActions" type="text/x-handlebars" nonce=''>
   <div class="home actions">
     <div>
@@ -19,7 +19,7 @@ const homeBar = `
   </div>
 </script>`;
 
-const contactList = `
+const contactList = /* html */ `
 <script id="contactList" type="text/x-handlebars" nonce=''>
   {{#if contacts}}
     <div id='contact-list' class='contact-list-grid'>
