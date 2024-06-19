@@ -130,8 +130,11 @@ class Home extends TemplateWrapper {
   }
 
   draw(state) {
-    super.draw(state);
+    const contacts = this.appState.formatContacts(state.contacts);
+    const formatted = { ...state, contacts };
+    super.draw(formatted);
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
+    select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 
   // customElement - home
@@ -141,11 +144,21 @@ class Home extends TemplateWrapper {
   }
 
   // customElement - home
-  async handleSearchInput(e) {
+  handleSearchInput(e) {
     const field = select('#contact-name-search');
     // if (e.target !== field) return;
     const { value } = field;
-    this.drawMatchingContacts(value);
+    console.log({ value })
+    this.drawMatchingContacts(value ?? '');
+  }
+
+  handleDeleteClick(e) {
+    if (!e.target.classList.contains('delete')) return;
+    e.preventDefault();
+    const confirmed = confirm('Are you sure? This operation is irreversible!');
+    if (!confirmed) return;
+    const { id } = e.target.dataset;
+    this.appState.deleteContact(id).then((result) => this.handleSearchInput());
   }
 
   // customElement - home
@@ -159,8 +172,11 @@ class Home extends TemplateWrapper {
       contacts = contacts.filter((contact) => contact.full_name.match(pattern));
     }
     const formatted = this.appState.formatContacts(contacts);
+    console.log('appStateContacts: ', this.appState.getContacts())
+    console.log({contacts})
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
     this.insertionCallback(newList);
+    select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 }
 

@@ -91,7 +91,7 @@ export default class Router {
   // Router
   bindNavigationEvents() {
     const navLinks = selectAll('.navigation');
-    console.log({navLinks})
+    console.table({navLinks})
     selectAll('.navigation').forEach((link) => {
       link.removeEventListener('click', this.boundClickHandler);
       link.addEventListener('click', this.boundClickHandler);
@@ -122,7 +122,7 @@ export default class Router {
 
   #navWithoutHistory() {
     const path = window.location.hash;
-    alert(`without history: ${path}, ${window.location}`)
+    // alert(`without history: ${path}, ${window.location}`)
     const route = this.matchRoute(path || '/');
     const pageState = this.appState.getPage();
     history.replaceState(pageState, '', new URL(path, this.origin));

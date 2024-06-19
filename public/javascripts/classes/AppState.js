@@ -14,7 +14,7 @@ export default class AppState {
       pageState: null,
     };
     this.storage = new LocalStorageManager(state);
-    this.#fetchContacts();
+    // this.#fetchContacts();
   }
 
   async get() {
@@ -44,7 +44,9 @@ export default class AppState {
   // AppState
   // requires that all CUD operations on contacts correctly update this.#contacts
   async getContacts() {
-    if (this.#contacts === null) await this.#fetchContacts();
+    if (this.#contacts === null) {
+      await this.#fetchContacts();
+    }
     return this.#contacts.slice();
   }
 
@@ -53,7 +55,8 @@ export default class AppState {
   }
 
   async #fetchContacts() {
-    this.#updateLocalContacts(await contactAPI.fetchContacts());
+    const fetched = await contactAPI.fetchContacts();
+    this.#updateLocalContacts(fetched);
   }
 
   formatContacts(contacts) {
@@ -77,6 +80,7 @@ export default class AppState {
     if (result) {
       this.#contacts.push(newContact);
     }
+    return result;
   }
 
   // save contact to API and update locally if successful
@@ -87,15 +91,18 @@ export default class AppState {
       const existing = this.findContact(updatedContact.id);
       updateObject(existing, updatedContact);
     }
+    return result;
   }
 
   async deleteContact(id) {
-    const result = await this.contactAPI.deleteContact(id);
-    console.log({deleteResult: result});
-    if (result) {
-      const index = this.#contacts.findIndex((contact) => contact.id === id);
-      this.#contacts.splice(index, 1);
+    const deleteResult = await contactAPI.deleteContact(id);
+    console.log({deleteResult});
+    if (deleteResult !== null) {
+      const remaining = this.#contacts.filter((contact) => String(contact.id) !== String(id));
+      console.table(remaining)
+      this.#updateLocalContacts(remaining);
     }
+    return deleteResult;
   }
 
   // fetch from localStorage
