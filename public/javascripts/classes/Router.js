@@ -120,14 +120,15 @@ export default class Router {
     this.#draw(this.routes[route ?? '/']);
   }
 
-  #navWithoutHistory() {
+  async #navWithoutHistory() {
     const path = window.location.hash;
     // alert(`without history: ${path}, ${window.location}`)
     const route = this.matchRoute(path || '/');
     const params = /:/.test(route) ? Router.extractParams(path, route) : { };
-    const state = this.appState.get();
+    const state = await this.appState.get();
     console.log({state, params, path})
-    history.replaceState(params, '', new URL(path, this.origin));
+    
+    history.replaceState(Object.assign(state.pageState, params), '', new URL(path, this.origin));
     if (!route) {
       console.error(`Path '${path}' is invalid; redirecting home`);
       this.#draw(this.routes['/']);
