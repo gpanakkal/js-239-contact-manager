@@ -1,6 +1,7 @@
 import AppState from "./classes/AppState.js";
 import Router from "./classes/Router.js";
 import { select, selectAll, xhrRequest } from "./lib/helpers.js";
+import ContactForm from "./templates/ContactForm.js";
 import Home from "./templates/Home.js";
 
 class ContactManager {
@@ -20,12 +21,13 @@ class ContactManager {
     this.state = new AppState();
     // define routes and arrays of template wrapper functions
     this.routes = {
+      '/': this.pages(Home),
       '#home': this.pages(Home),
-      '#contacts/new': this.pages(),
-      '#contacts/edit/:id': this.pages(),
+      '#contacts/new': this.pages(ContactForm),
+      '#contacts/edit/:id': this.pages(ContactForm),
       '#contacts/delete/:id': this.pages(), // remove this - should be a contact API request only
     }
-    this.router = new Router(this.routes, this.container);
+    this.router = new Router(this);
   }
 
   pages(...templateWrappers) {

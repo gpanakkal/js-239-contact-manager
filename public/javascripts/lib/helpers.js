@@ -52,8 +52,6 @@ const getFormValues = (e) => [...e.currentTarget.elements]
 const htmlToElements = (htmlString) => {
   const div = create('div', { }, { innerHTML: htmlString });
   const children = [...div.children];
-  console.log(div.textContent);
-  console.log(children);
   children.forEach((child) => child.remove());
   return children;
 }

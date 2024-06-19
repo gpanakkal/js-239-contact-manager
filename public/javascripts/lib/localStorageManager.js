@@ -20,25 +20,29 @@ import { updateObject, assertObject } from "./helpers.js";
 //   return [revised, missingKeys];
 // }
 
-class localStorageManager {
-  static create(name, value) {
+// take a state object with keys and optionally values
+class LocalStorageManager {
+  constructor(state) {
+    this.fields = Object.keys(state);
+  }
+  create(name, value) {
     const exists = !!this.read(name);
     if (exists) throw new Error(`Value "${name}" already exists in storage!`);
     this.replace(name, value);
   }
 
-  static read(name) {
+  read(name) {
     const existing = localStorage.getItem(name);
-    if (existing === null) throw new Error(`Value to update "${name}" not found`); // should this be a throw?
+    // if (existing === null) throw new Error(`Value to read "${name}" not found`); // should this be a throw?
     return JSON.parse(existing);
   }
 
-  static replace(name, value) {
+  replace(name, value) {
     localStorage.setItem(name, JSON.stringify(value));
   }
 
   // erases values but retains properties
-  static reset(name) {
+  reset(name) {
     const result = this.read(name);
     for (const key in result) {
       result[key] = undefined;
@@ -85,4 +89,4 @@ class localStorageManager {
   }
 }
 
-export default localStorageManager;
+export default LocalStorageManager;

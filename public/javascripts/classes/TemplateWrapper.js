@@ -12,18 +12,23 @@ export default class TemplateWrapper {
   createTemplates(templateStrings) {
     this.templates = templateStrings.map((str) => {
       const script = helpers.htmlToElements(str)[0];
-      console.log({str, script})
-      return Handlebars.compile(script.innerHTML);
+      const compiled = Handlebars.compile(script.innerHTML);
+      return [script.id, compiled];
     });
   }
 
+  // draw the element, passing in the app state
   draw(state) {
-    // draw the element again, passing in the state
+    console.log({state, caller: this});
     for (let i = 0; i < this.templates.length; i += 1) {
-      const html = this.templates[i]({ state });
-      console.log(html); // temporary
+      const html = this.templates[i][1](state);
+      // console.log(html); // temporary
       // insert the element into the DOM using the insertion callback
       this.insertionCallback(html);
     }
+  }
+
+  findTemplate(name) {
+    return this.templates.find(([id]) => id === name)[1];
   }
 }

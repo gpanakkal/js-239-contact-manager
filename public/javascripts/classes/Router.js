@@ -6,13 +6,11 @@ import { selectAll } from "../lib/helpers.js";
 export default class Router {
   // router - obsolete
   static routeMatchRegex(routePath) {
-    const hashReplace = /^#/.test(routePath) ? '#' : '';
     const patternString = routePath
-      .replace(/^#/, '')
       .split('/')
       .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
       .join('/');
-    return new RegExp(`^${hashReplace}${patternString}/?$`, 'i');
+    return new RegExp(`^${patternString}/?$`, 'i');
   }
 
   // router
@@ -22,8 +20,8 @@ export default class Router {
 
   // router
   static extractParams(navPath, routePath) {
-    const routeSegments = Router.pathSegments(routePath);
-    const navSegments = Router.pathSegments(navPath);
+    const routeSegments = Router.segmentPath(routePath);
+    const navSegments = Router.segmentPath(navPath);
   
     return navSegments.reduce((acc, value, i) => {
       const paramSegment = routeSegments[i];
@@ -43,28 +41,40 @@ export default class Router {
       && (path.length === 0 || path.match(/(^#\w+)|(^\/$)/))
   }
 
-  constructor(routes, container) {
-    this.routes = routes;
-    this.container = container;
+  constructor(app) {
+    this.routes = app.routes;
+    this.container = app.container;
+    this.appState = app.state;
     this.origin = window.location.origin;
     this.boundClickHandler = this.handleNavClick.bind(this);
     this.routePatterns = this.getRoutePatterns();
     history.scrollRestoration = "auto";
+    window.addEventListener('popstate', (e) => {
+      e.preventDefault();
+      // alert('state popped')
+      const route = this.matchRoute(window.location.hash || '/');
+      console.log({ poppedState: e.state, route, hash: window.location.hash })
+      this.#draw(this.routes[route]);
+      
+    });
     this.#navWithoutHistory();
   }
   
   getRoutePatterns() {
-    return Object.fromEntries(
-      Object.entries(this.routes).map(([routePath]) => [Router.routeMatchRegex(routePath), routePath])
-    );
+    return Object.entries(this.routes)
+      .map(([routePath]) => [Router.routeMatchRegex(routePath), routePath]);
   }
 
   // router
   // given a nav path, finds the corresponding route
   matchRoute(navPath) {
-    const match = Object.keys(this.routePatterns).find((pattern) => navPath.match(pattern));
+    const match = this.routePatterns.find(([pattern, route]) => {
+      return pattern.test(navPath);
+    });
+    console.log({navPath, match })
     if (!match) return null;
-    return this.routePatterns[match];
+    const route = match[1];
+    return route;
   }
 
   // router
@@ -78,10 +88,24 @@ export default class Router {
     this.navTo(window.location.hash);
   }
 
+  // Router
+  bindNavigationEvents() {
+    const navLinks = selectAll('.navigation');
+    console.log({navLinks})
+    selectAll('.navigation').forEach((link) => {
+      link.removeEventListener('click', this.boundClickHandler);
+      link.addEventListener('click', this.boundClickHandler);
+      link.addEventListener('auxclick', (e) => e.preventDefault());
+    });
+  }
+
   handleNavClick(e) {
+    console.log(e);
+    console.log("clicked navlink")
     const path = e.currentTarget.getAttribute('href');
     const route = this.matchRoute(path);
     if (!route && !this.sameOrigin(path)) {
+      console.warn('external path: ', path)
       return;
     };
     e.preventDefault();
@@ -89,29 +113,36 @@ export default class Router {
   }
 
   navTo(path, route) {
-    const params = /:/.test(route) ? App.extractParams(path, route) : { };
-    App.logNav({ path, route, params })
-    this.manageHistory(params, path);
-    this.routes[route ?? '#home'](params);
+    const params = /:/.test(route) ? Router.extractParams(path, route) : { };
+    Router.logNav({ path, route, params })
+    this.#manageHistory(params, path);
+    // alert(`${path} ; ${window.location.hash}`)
+    this.#draw(this.routes[route ?? '/']);
   }
 
   #navWithoutHistory() {
     const path = window.location.hash;
-    const route = this.matchRoute(path);
+    alert(`without history: ${path}, ${window.location}`)
+    const route = this.matchRoute(path || '/');
+    const pageState = this.appState.getPage();
+    history.replaceState(pageState, '', new URL(path, this.origin));
     if (!route) {
       console.error(`Path '${path}' is invalid; redirecting home`);
-      this.draw(this.routes['#home']);
+      this.#draw(this.routes['/']);
     } else {
-      this.draw(this.routes[route]);
+      const nextPage = this.routes[route];
+      console.log({nextPage})
+      this.#draw(this.routes[route]);
     }
   }
 
   // router - or whichever object makes the final determination to follow a route or not
   // revise to only add history entries and update the address bar
-  manageHistory(pageState, path) {
-    history.replaceState(this.getPageState(), '', window.location.pathname);
-    history.pushState(pageState, '', new URL(path, this.origin));
-    this.setPageState(pageState);
+  async #manageHistory(params, path) {
+    const pageState = this.appState.getPage();
+    history.replaceState(pageState, '', window.location.pathname);
+    history.pushState(params, '', new URL(path, this.origin));
+    this.appState.setPage(params);
   }
 
   // Router
@@ -119,21 +150,16 @@ export default class Router {
   // that appends the template to the end of the app container
   // instead of inserting templates inside this method
   // re-render the entire app container
-  draw(wrapperArray) {
+  async #draw(wrapperArray) {
+    // alert('drawing....')
     this.container.innerHTML = null;
-    wrapperArray.forEach((wrapper) => {
-      console.log(wrapper);
-      wrapper.draw();
+    const state = await this.appState.get();
+    const promises = wrapperArray.map((wrapper) => {
+      // console.log(wrapper);
+      return wrapper.draw(state);
     });
-    this.bindNavigationEvents();
-  };
-
-  // Router
-  bindNavigationEvents() {
-    selectAll('.navigation').forEach((link) => {
-      link.removeEventListener('click', this.boundClickHandler);
-      link.addEventListener('click', this.boundClickHandler);
-      link.addEventListener('auxclick', (e) => e.preventDefault());
+    Promise.all(promises).then(() => {
+      this.bindNavigationEvents();
     });
   }
 }

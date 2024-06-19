@@ -12,5 +12,12 @@
     "email": "vpr@example.com",
     "phone_number": "9876543210",
     "tags": "work,friend"
+  },
+  {
+    "full_name": "to delete",
+    "phone_number": "8002044045",
+    "email": "b@a.com",
+    "tags": "person",
+    "id": 3
   }
 ]
