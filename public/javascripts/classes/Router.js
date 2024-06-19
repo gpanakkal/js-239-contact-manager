@@ -124,8 +124,10 @@ export default class Router {
     const path = window.location.hash;
     // alert(`without history: ${path}, ${window.location}`)
     const route = this.matchRoute(path || '/');
-    const pageState = this.appState.getPage();
-    history.replaceState(pageState, '', new URL(path, this.origin));
+    const params = /:/.test(route) ? Router.extractParams(path, route) : { };
+    const state = this.appState.get();
+    console.log({state, params, path})
+    history.replaceState(params, '', new URL(path, this.origin));
     if (!route) {
       console.error(`Path '${path}' is invalid; redirecting home`);
       this.#draw(this.routes['/']);

@@ -94,7 +94,14 @@ const setSubtract = (iterator1, iterator2) => {
 
 const stringSubtract = (first, second) => arraySubtract(first, second).join('');
 
-// Update only fields found in the original object
+/**
+ * Immutably update an object without adding new properties
+ * @param {object} original 
+ * @param {object} updates 
+ * @param {function} updateCb A function to execute to update the object
+ * @returns {[object, string[]]} A double of the updated object and an
+ * array of the missing keys
+ */
 const updateObject = (original, updates, updateCb = undefined) => {
   const updateFunc = updateCb ?? ((a, b, key) => a[key] = b[key]);
   const revised = { ...original };

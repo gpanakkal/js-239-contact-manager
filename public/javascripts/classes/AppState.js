@@ -88,8 +88,12 @@ export default class AppState {
     const result = await contactAPI.editContact(updatedContact);
     console.log({editResult: result});
     if (result) {
-      const existing = this.findContact(updatedContact.id);
-      updateObject(existing, updatedContact);
+      const existing = await this.findContact(updatedContact.id);
+      const original = JSON.parse(JSON.stringify(existing))
+      console.log({ original, updatedContact })
+      const [updated, missingKeys] = updateObject(existing, updatedContact);
+      Object.assign(existing, updated);
+      console.log({merged: existing})
     }
     return result;
   }

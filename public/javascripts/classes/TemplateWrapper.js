@@ -1,7 +1,6 @@
 import * as helpers from '../lib/helpers.js';
 
 export default class TemplateWrapper {
-
   constructor (templateStrings, insertionCallback, appState) {
     this.templates = [];
     this.insertionCallback = insertionCallback; // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)

@@ -1,30 +1,23 @@
 [
   {
-    "id": 1,
-    "full_name": "Naveed Fida",
-    "email": "nf@example.com",
-    "phone_number": "12345678901",
-    "tags": "work,friend"
-  },
-  {
     "id": 2,
     "full_name": "Victor Reyes",
-    "email": "vpr@example.com",
-    "phone_number": "09876543210",
+    "email": "vpr@example.ca",
+    "phone_number": "3236543210",
     "tags": "work,friend"
   },
   {
     "full_name": "Example Contact",
-    "phone_number": "111-222-3333",
-    "email": "b@a",
-    "tags": null,
+    "phone_number": "",
+    "email": "b@a.bop",
+    "tags": "",
     "id": 4
   },
   {
     "full_name": "John Doe",
-    "phone_number": "18002024045",
+    "phone_number": "",
     "email": "john@doe.com",
-    "tags": null,
+    "tags": "",
     "id": 5
   },
   {
@@ -33,5 +26,12 @@
     "email": "bca@abc.com",
     "tags": null,
     "id": 12
+  },
+  {
+    "full_name": "newest contact!",
+    "phone_number": "",
+    "email": "afasdf09@alksdj.com",
+    "tags": "enemy",
+    "id": 13
   }
 ]

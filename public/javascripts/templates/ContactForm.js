@@ -301,9 +301,9 @@ class ContactForm extends TemplateWrapper {
 
   // customElement - contactForm
   async draw(state) {
+    console.log({drawState: state})
     const contact = await this.appState.findContact(state.pageState.id);
     super.draw({ contact });
-    // TemplateWrapper.prototype.draw.call(this, {contact});
     this.bindContactFormEvents();
   }
 
@@ -325,17 +325,18 @@ class ContactForm extends TemplateWrapper {
   // customElement - contactForm
   validateContactForm(formObj) {
     const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
+    const { full_name, email, phone_number } = formObj;
     const conditions = {
       'full_name': {
-        check: formObj.full_name.trim().length > 0,
+        check: full_name.trim().length > 0,
         message: 'You must provide a name.',
       },
       'email': {
-        check: !!formObj.email.match(/[\w]+@[\w]+\.\w{2,}/),
+        check: !!email.match(/[\w]+@[\w]+\.\w{2,}/),
         message: 'Email must have a name, domain, and @ sign.',
       },
       'phone_number': {
-        check: !!formObj.phone_number.match(phoneNumberPattern),
+        check: (phone_number.length === 0 || !!phone_number.match(phoneNumberPattern)),
         message: 'Please enter a valid US phone number.',
       },
     };
@@ -362,6 +363,7 @@ class ContactForm extends TemplateWrapper {
     const result = await (formObj.id 
       ? this.appState.editContact(formObj) 
       : this.appState.createContact(formObj));
+    await result;
     document.querySelector('#home-button').dispatchEvent(new CustomEvent('click'));
   }
 

@@ -249,6 +249,10 @@ a {
   width: 100%;
 }
 
+a.btn {
+  text-align: center;
+}
+
 .page-header {
   margin-top: 40px;
   margin-bottom: 20px;
