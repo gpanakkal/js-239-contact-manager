@@ -1,24 +1,8 @@
-const select = (selector) => document.querySelector(selector);
-
-const selectAll = (selector) => [...document.querySelectorAll(selector)];
-
-// create elements
-const create = (tag, attributes = {}, properties = {}) => {
-  const el = document.createElement(tag);
-  Object.entries(attributes).forEach(([key, value]) => el.setAttribute(key, value));
-  Object.assign(el, properties);
-  return el;
+const assertObject = (value) => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new TypeError(`Argument must be an object. Received: ${value}`);
+  };
 }
-
-const htmlToElements = (html) => {
-  const div = create('div', { }, { innerHTML: html });
-  const children = div.children;
-  children.remove();
-  return children;
-}
-
-const hashIterable = (iterable) => [].reduce
-  .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
 
 /**
  * Given two array-like objects, non-destructively remove each element from iterator1 found in the 
@@ -34,7 +18,66 @@ const arraySubtract = (iterator1, iterator2) => {
   return Object.values(output);
 }
 
-const stringSubtract = (first, second) => arraySubtract(first, second).join('');
+// create elements
+const create = (tag, attributes = {}, properties = {}) => {
+  const el = document.createElement(tag);
+  Object.entries(attributes).forEach(([key, value]) => el.setAttribute(key, value));
+  Object.assign(el, properties);
+  return el;
+}
+
+const formatNumber = (phoneNumber) => {
+  const num = String(phoneNumber);
+  return num.length === 10 
+    ? num.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
+    : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 $2-$3-$4');
+};
+
+// const formDataToJson = (formData) => {
+//   const obj = [...formData.entries()]
+//     .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: pair[1] }), {});
+//   return JSON.stringify(obj);
+// }
+
+const formToJson = (form) => JSON.stringify(Object.fromEntries(new FormData(form)));
+
+const getFormValues = (e) => [...e.currentTarget.elements]
+.reduce((acc, el) => Object.assign(acc, { [el.name]: el.value }), { });
+
+/**
+ * Converts raw HTML text into elements
+ * @param {string} htmlString 
+ * @returns {HTMLCollection}
+ */
+const htmlToElements = (htmlString) => {
+  const div = create('div', { }, { innerHTML: htmlString });
+  const children = [...div.children];
+  console.log(div.textContent);
+  console.log(children);
+  children.forEach((child) => child.remove());
+  return children;
+}
+
+const hashIterable = (iterable) => [].reduce
+  .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
+
+// untested
+const queryString = (formObj) => {
+  return Object.entries(formObj).reduce((acc, pair) => {
+    const [key, value] = pair.map(encodeURIComponent);
+    return acc.concat(`${key}=${value}`)}, '');
+}
+
+
+const rollOverAccess = (arr, i) => {
+  let index = (i % arr.length);
+  if (index < 0) index = arr.length + index;
+  return arr[index];
+}
+
+const select = (selector) => document.querySelector(selector);
+
+const selectAll = (selector) => [...document.querySelectorAll(selector)];
 
 /**
  * Given two array-like objects, immutably remove each element from iterator1 found in iterator2
@@ -51,35 +94,29 @@ const setSubtract = (iterator1, iterator2) => {
   return Object.values(output);
 }
 
-const formatNumber = (phoneNumber) => {
-  const num = String(phoneNumber);
-  return num.length === 10 
-    ? num.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
-    : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 $2-$3-$4');
-};
+const stringSubtract = (first, second) => arraySubtract(first, second).join('');
 
-const getFormValues = (e) => [...e.currentTarget.elements]
-.reduce((acc, el) => Object.assign(acc, { [el.name]: el.value }), { });
-
-// const formDataToJson = (formData) => {
-//   const obj = [...formData.entries()]
-//     .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: pair[1] }), {});
-//   return JSON.stringify(obj);
-// }
-
-const formToJson = (form) => JSON.stringify(Object.fromEntries(new FormData(form)));
-
-// untested
-const queryString = (formObj) => {
-  return Object.entries(formObj).reduce((acc, pair) => {
-    const [key, value] = pair.map(encodeURIComponent);
-    return acc.concat(`${key}=${value}`)}, '');
+// Update only fields found in the original object
+const updateObject = (original, updates, updateCb = undefined) => {
+  const updateFunc = updateCb ?? ((a, b, key) => a[key] = b[key]);
+  const revised = { ...original };
+  const missingKeys = [];
+  Object.keys(updates).forEach((key) => {
+    if (key in original) {
+      updateFunc(revised, updates, key);
+    } else {
+      missingKeys.push(key);
+    }
+  });
+  return [revised, missingKeys];
 }
 
-const xhrRequest = (method, path, headers = {}, data = undefined) => {
+
+const xhrRequest = (method, path, headers = {}, data = undefined, responseType = '') => {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open(method, path);
+    request.responseType = responseType;
   
     Object.entries(headers)
       .forEach(([header, value]) => request.setRequestHeader(header, value));
@@ -96,27 +133,21 @@ const xhrRequest = (method, path, headers = {}, data = undefined) => {
   });
 };
 
-
-const rollOverAccess = (arr, i) => {
-  let index = (i % arr.length);
-  if (index < 0) index = arr.length + index;
-  return arr[index];
-}
-
-
 export {
+  assertObject,
+  arraySubtract,
+  create,
+  formatNumber,
+  formToJson,
+  getFormValues,
+  hashIterable,
+  htmlToElements,
+  queryString,
+  rollOverAccess,
   select,
   selectAll,
-  create,
-  htmlToElements,
-  hashIterable,
-  arraySubtract,
-  stringSubtract,
   setSubtract,
-  formatNumber,
-  getFormValues,
-  formToJson,
-  queryString,
+  stringSubtract,
+  updateObject,
   xhrRequest,
-  rollOverAccess,
 };

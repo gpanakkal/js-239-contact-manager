@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="./stylesheets/whitespace-reset.css">
+  <link rel="stylesheet" href="./stylesheets/style.css">
+  <!-- <script src="/javascripts/lib/jquery.js" nonce=''></script> -->
+  <script src="/javascripts/lib/handlebars.js" nonce=''></script>
+  <script type="module" src="/javascripts/app.js" nonce=''></script>
+
+  <script id="homeActions" type="text/x-handlebars" nonce=''>
+    <div class="home actions">
+      <div>
+        <a class="navigation btn large add-contact" href="#contacts/new">Add Contact</a>
+      </div>
+      <div>
+        <input 
+          name="contact-name-search" 
+          id="contact-name-search" 
+          class="contact-name-search" 
+          placeholder="Search"
+          value="{{searchValue}}"
+        >
+      </div>
+    </div>
+  </script>
+
+  <script id="contactCardPartial" data-type="partial" type="text/x-handlebars" nonce=''>
+    <div class="contact-card">
+      <h3 class="cardHeading">{{full_name}}</h3>
+      <dl>
+        <dt>Phone Number:</dt>
+        <dd>{{phone_number}}</dd>
+        <dt>Email:</dt>
+        <dd>{{email}}</dd>
+        {{#if tags}}
+          <dt>Tags:</dt>
+          <dd>{{tags}}</dd>
+        {{/if}}
+      </dl>
+      <div class="contact actions">
+        <div><a class="navigation btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
+        <div><a class="btn delete" href="#contacts/delete/{{id}}">Delete</a></div>
+      </div>
+    </div>
+  </script>
+
+  <script id="contactList" type="text/x-handlebars" nonce=''>
+    {{#if contacts}}
+      <div id='contact-list' class='contact-list-grid'>
+        {{#if contacts.length}}
+          {{#each contacts}}
+            {{> contactCardPartial}}
+          {{/each}}
+        {{/if}}
+      </div>
+    {{else}}
+      {{#if searchValue}}
+        <div id="contact-list" class="no-contacts">
+          <h3>There are no contacts matching <strong>{{searchValue}}</strong>.</h3>
+        </div>
+      {{else}}
+        <div id="contact-list" class="no-contacts">
+          <h3>There are no contacts yet.</h3>
+        </div>
+      {{/if}}
+    {{/if}}
+  </script>
+
+  <script id="manageContactPartial" data-type="partial" type="text/x-handlebars" nonce=''>
+    <form id="contact-form">
+      <div id="contact-form-grid">
+        <input type="hidden" name="id" value="{{contact.id}}">
+        <label for="full_name">Full name:</label>
+        <div class="input-box">
+          <input type="text" name="full_name" value="{{contact.full_name}}">
+        </div>
+        <label for="email">Email address:</label>
+        <div class="input-box">
+          <input type="email" name="email" value="{{contact.email}}">
+        </div>
+        <label for="phone_number">Telephone number:</label>
+        <div class="input-box">
+          <input type="tel" name="phone_number" value="{{contact.phone_number}}">
+        </div>
+          <label for="tags">Tags:</label>
+          <div class="input-box">
+            <input type='text' name='tags' id='tag-input' value="{{contact.tags}}">
+            <div class="autocomplete-wrapper">
+              <ul class="autocomplete-ui">
+              </ul>
+            </div>
+          </div>
+        <label></label>
+        <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
+        <button id="contact-form-cancel" class="btn large">Cancel</button>
+      </div>
+    </form>
+  </script>
+
+  <script id="contactFormHint" type="text/x-handlebars" nonce=''>
+    <small class="form-hint">{{message}}</small>
+  </script>
+
+  <script id="contactFormTags" type="text/x-handlebars" nonce=''>
+    {{#each tags}}
+      <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
+    {{/each}}
+  </script>
+
+  <script id="createContact" type="text/x-handlebars" nonce=''>
+      <h2 class='page-header'>Create Contact</h2>
+      {{> manageContactPartial}}
+  </script>
+
+  <script id="editContact" type="text/x-handlebars" nonce=''>
+    <h2 class='page-header'>
+      {{#if contact}}Edit{{else}}Create{{/if}} Contact
+    </h2>
+    {{> manageContactPartial}}
+  </script>
+
+  <title>Contact Manager</title>
+</head>
+<body>
+  <header class="bs-header">
+    <div class="header container">
+      <a id="home-button" class="navigation" href="/">
+        <h1>Contact Manager</h1>
+      </a>
+      <p>Using Backbone.js, Localstorage, RequireJS, Handlebars, and Bootstrap</p>
+    </div>
+  </header>
+  <div id="app-container" class="app container">
+
+  </div>
+</body>
+</html>

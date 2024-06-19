@@ -1,6 +1,5 @@
-import debounce from './debounce.js';
-import * as helpers from './helpers.js';
-import stateManager from '../../../template_wrapper/public/javascripts/localStorageManager.js';
+import debounce from './lib/debounce.js';
+import * as helpers from './lib/helpers.js';
 const { select, selectAll, create, formToJson, xhrRequest } = helpers;
 
 class App {
@@ -272,8 +271,6 @@ class App {
   // customElement - home as draw(), 
   // inserting the template as adjacent HTML instead of calling app.draw()
   async drawHome() {
-    // const contacts = await this.getContacts();
-    // const { homeActions } = this.templates;
     this.draw(this.templates.homeActions());
     await this.drawContacts();
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
