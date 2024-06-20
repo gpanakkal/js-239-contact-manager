@@ -149,7 +149,7 @@ a {
   border-color: rgb(216, 108, 108);
 }
 
-#contact-name-search {
+#contact-name-search, #contact-tag-search {
   min-height: 20px;
   font-size: 14px;
   padding: 6px 12px;

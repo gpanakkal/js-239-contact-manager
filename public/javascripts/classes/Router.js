@@ -39,21 +39,17 @@ export default class Router {
     this.container = appContainer;
     this.appState = appState;
     this.origin = window.location.origin;
-    this.boundClickHandler = this.handleNavClick.bind(this);
-    this.boundAuxClickHandler = this.handleAuxClick.bind(this);
-    this.boundCustomNavHandler = this.handleCustomNav.bind(this);
+    this.boundClickHandler = this.#handleNavClick.bind(this);
+    this.boundAuxClickHandler = this.#handleAuxClick.bind(this);
+    this.boundCustomNavHandler = this.#handleCustomNav.bind(this);
     this.routePatterns = this.#getRoutePatterns();
     // history.scrollRestoration = "auto"; // does this make sense here?
 
     window.addEventListener('popstate', (e) => {
-      // console.log({popStateEvent: e})forward, but 
-
-      // return;
       // alert('state popped')
       e.stopPropagation();
       // save history if navigating forwards as well
       const historyState = history.state;
-      // if (!e.state) { console.error(e);  }
       console.warn({ popStateEventHistory: historyState });
       const path = Router.#getPath(new URL(historyState.href));
       const route = this.#matchRoute(path);
@@ -90,7 +86,7 @@ export default class Router {
 
   // could be eliminated?
   #refresh() {
-    this.navTo(window.location.hash);
+    this.#navTo(window.location.hash);
   }
 
   #bindNavigationEvents() {
@@ -110,20 +106,20 @@ export default class Router {
     // });
   }
 
-  handleAuxClick(e) {
+  #handleAuxClick(e) {
     const isNavLink = e.target.classList.contains('navigation') 
       && e.target.tagName === 'A';
     if (!isNavLink) return; 
     e.preventDefault();
   }
 
-  handleCustomNav(e) {
+  #handleCustomNav(e) {
     const path = e.detail;
     const route = this.#matchRoute(path);
-    this.navTo(path, route);
+    this.#navTo(path, route);
   }
 
-  handleNavClick(e) {
+  #handleNavClick(e) {
     const isNavLink = e.target.classList.contains('navigation') 
       && e.target.tagName === 'A';
     if (!isNavLink) return; 
@@ -132,11 +128,11 @@ export default class Router {
     e.preventDefault();
     const path = e.target.getAttribute('href');
     const route = this.#matchRoute(path);
-    this.navTo(path, route);
+    this.#navTo(path, route);
   }
 
   // draw the templates corresponding to the path and update the history
-  navTo(path, route) {
+  #navTo(path, route) {
     console.warn('navigating to', path)
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
     Router.#logNav({ path, route, params })

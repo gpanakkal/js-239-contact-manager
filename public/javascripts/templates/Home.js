@@ -63,7 +63,7 @@ class Home extends TemplateWrapper {
     super.draw({ contacts: formatted });
     this.#iniTagAutocomplete();
     select('#contact-name-search').addEventListener('input', this.handleNameSearchInput.bind(this));
-    select('#contact-id-search').addEventListener('input', this.handleTagSearchInput.bind(this));
+    select('#contact-tag-search').addEventListener('input', this.handleTagSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 
@@ -106,7 +106,7 @@ class Home extends TemplateWrapper {
 
     new Autocomplete({
       inputElement: select('#contact-tag-search'),
-      optionsLoader: this.appState.getTags.bind(this.appState),
+      optionsLoader: this.appState.getTagSet.bind(this.appState),
       matchCallback: tagMatcher,
       fillCallback: tagUpdateCb,
     });
@@ -119,7 +119,7 @@ class Home extends TemplateWrapper {
     const { value } = e.currentTarget;
     console.log({ value })
     console.warn({ HomeSearchState: history.state })
-    this.drawMatchingContacts(value ?? '');
+    this.drawMatchingContacts({ searchKey: 'full_name', searchValue: value ?? ''});
   }
 
   handleDeleteClick(e) {
@@ -134,13 +134,13 @@ class Home extends TemplateWrapper {
 
   // customElement - home
   // render contacts that match the search
-  async drawMatchingContacts({ searchKey, searchValue }) {
+  async drawMatchingContacts({ searchKey, searchValue } = {}) {
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
     let contacts = await this.appState.getContacts();
     if (searchKey !== undefined && searchValue !== undefined) {
       const pattern = new RegExp(searchValue, 'i');
-      contacts = contacts.filter((contact) => contact[searchKey].match(pattern));
+      contacts = contacts.filter((contact) => pattern.test(contact[searchKey]));
     }
     const formatted = this.appState.formatContacts(contacts);
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });

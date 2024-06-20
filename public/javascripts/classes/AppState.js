@@ -69,7 +69,7 @@ export default class AppState {
     return deleteResult;
   }
 
-  async getTags() {
+  async getTagSet() {
     const contacts = await this.getContacts();
     const allTags = contacts.flatMap((contact) => contact.tags ?? []);
     const uniqueTags = new Set(allTags);

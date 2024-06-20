@@ -79,7 +79,7 @@ class ContactForm extends TemplateWrapper {
 
     new Autocomplete({
       inputElement: select('#contact-form #tags'),
-      optionsLoader: this.appState.getTags.bind(this.appState),
+      optionsLoader: this.appState.getTagSet.bind(this.appState),
       matchCallback: tagMatcher,
       fillCallback: tagUpdateCb,
     });
