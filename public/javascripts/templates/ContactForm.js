@@ -1,4 +1,4 @@
-import Autocomplete from "../classes/Autocomplete.js";
+import TagAutocomplete from "../classes/Autocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js";
 import { hashIterable, select, selectAll } from "../lib/helpers.js";
 
@@ -51,39 +51,40 @@ class ContactForm extends TemplateWrapper {
     const contact = params?.id ? await this.appState.findContact(params.id) : null;
     super.draw(contact);
     this.bindContactFormEvents();
-    this.#drawTagAutocomplete();
+    // this.#drawTagAutocomplete();
+    new TagAutocomplete(select('#contact-form #tags'), this.appState.getTagSet.bind(this.appState));
     select('#full_name').focus();
   }
 
-  #drawTagAutocomplete() {
-    // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
-    // sorted by the precedence of the match
-    const tagMatcher = (tagInputText, tagValues) => {
-      const tags = tagInputText.split(',').map((tag) => tag.trim());
-      const lastTag = tags[tags.length - 1].toLowerCase();
-      const otherTags = hashIterable(tags.slice(0, -1));
-      const matchingTags = tagValues.filter((value) => {
-        const tagPresent = (value.toLowerCase() in otherTags);
-        const lastTagMatches = value.toLowerCase().includes(lastTag);
-        return !tagPresent && lastTagMatches;
-      });
-      return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
-    }
+  // #drawTagAutocomplete() {
+  //   // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
+  //   // sorted by the precedence of the match
+  //   const tagMatcher = (tagInputText, tagValues) => {
+  //     const tags = tagInputText.split(',').map((tag) => tag.trim());
+  //     const lastTag = tags[tags.length - 1].toLowerCase();
+  //     const otherTags = hashIterable(tags.slice(0, -1));
+  //     const matchingTags = tagValues.filter((value) => {
+  //       const tagPresent = (value.toLowerCase() in otherTags);
+  //       const lastTagMatches = value.toLowerCase().includes(lastTag);
+  //       return !tagPresent && lastTagMatches;
+  //     });
+  //     return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
+  //   }
 
-    const tagUpdateCb = (input, option) => {
-      const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
-      const newTagStr = `${option.getAttribute('value')}, `;
-      const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
-      return withNewTag;
-    };
+  //   const tagUpdateCb = (input, option) => {
+  //     const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
+  //     const newTagStr = `${option.getAttribute('value')}, `;
+  //     const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
+  //     return withNewTag;
+  //   };
 
-    new Autocomplete({
-      inputElement: select('#contact-form #tags'),
-      optionsLoader: this.appState.getTagSet.bind(this.appState),
-      matchCallback: tagMatcher,
-      fillCallback: tagUpdateCb,
-    });
-  }
+  //   new Autocomplete({
+  //     inputElement: select('#contact-form #tags'),
+  //     optionsLoader: this.appState.getTagSet.bind(this.appState),
+  //     matchCallback: tagMatcher,
+  //     fillCallback: tagUpdateCb,
+  //   });
+  // }
 
   // customElement - contactForm
   #drawFormHints(form, conditions) {

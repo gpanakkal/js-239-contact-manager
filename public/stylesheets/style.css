@@ -123,6 +123,11 @@ a {
   justify-content: center;
 }
 
+/* .actions.home input {
+  padding: 0px 12px;
+  height: 100%;
+} */
+
 .btn {
   color: #563d7c;
   background-color: #fff;
@@ -151,8 +156,9 @@ a {
 
 #contact-name-search, #contact-tag-search {
   min-height: 20px;
+  height: 100%;
   font-size: 14px;
-  padding: 6px 12px;
+  padding: 0px 12px;
   border: 1px solid #ccc;
 }
 
@@ -284,6 +290,7 @@ input.invalid {
   /* box-sizing: border-box; */
   padding: 0px !important;
   position: relative;
+  size: 100%;
 }
 
 .autocomplete-ui {

@@ -1,4 +1,4 @@
-import Autocomplete from "../classes/Autocomplete.js";
+import TagAutocomplete from "../classes/TagAutoComplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js"
 import { hashIterable, select } from "../lib/helpers.js";
 
@@ -42,7 +42,7 @@ const contactList = /* html */ `
   {{else}}
     {{#if searchValue}}
       <div id="contact-list" class="no-contacts">
-        <h3>There are no contacts matching <strong>{{searchValue}}</strong>.</h3>
+        <h3>There are no contacts with {{searchValue}}.</h3>
       </div>
     {{else}}
       <div id="contact-list" class="no-contacts">
@@ -61,65 +61,18 @@ class Home extends TemplateWrapper {
     const contacts = await this.appState.getContacts();
     const formatted = this.appState.formatContacts(contacts);
     super.draw({ contacts: formatted });
-    this.#iniTagAutocomplete();
-    select('#contact-name-search').addEventListener('input', this.handleNameSearchInput.bind(this));
-    select('#contact-tag-search').addEventListener('input', this.handleTagSearchInput.bind(this));
+    new TagAutocomplete(select('#contact-tag-search'), this.appState.getTagSet.bind(this.appState));
+    select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
+    select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
+    select('#contact-tag-search').addEventListener('autocomplete-cleared', this.handleSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 
-  // customElement - home
-  // re-render only the contact list
-  async drawContacts() {
-    this.drawMatchingContacts();
-  }
-
-  // need to split this up if I want to prevent the default action
-  async handleTagSearchInput(e) {
-    const { value } = e.currentTarget;
-    const allContacts = await this.appState.getContacts();
-    const matchingContacts = allContacts
-      .filter((contact) => contact.tags.some((tag) => tag.includes(value)));
-    this.drawMatchingContacts({ searchKey: 'tags', searchValue: ''})
-  }
-
-  #iniTagAutocomplete() {
-    // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
-    // sorted by the precedence of the match
-    const tagMatcher = (tagInputText, tagValues) => {
-      const tags = tagInputText.split(',').map((tag) => tag.trim());
-      const lastTag = tags[tags.length - 1].toLowerCase();
-      const otherTags = hashIterable(tags.slice(0, -1));
-      const matchingTags = tagValues.filter((value) => {
-        const tagPresent = (value.toLowerCase() in otherTags);
-        const lastTagMatches = value.toLowerCase().includes(lastTag);
-        return !tagPresent && lastTagMatches;
-      });
-      return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
-    }
-
-    const tagUpdateCb = (input, option) => {
-      const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
-      const newTagStr = `${option.getAttribute('value')}, `;
-      const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
-      return withNewTag;
-    };
-
-    new Autocomplete({
-      inputElement: select('#contact-tag-search'),
-      optionsLoader: this.appState.getTagSet.bind(this.appState),
-      matchCallback: tagMatcher,
-      fillCallback: tagUpdateCb,
-    });
-  }
-
-  // customElement - home
-  handleNameSearchInput(e) {
-    console.log({ searchEvent: e })
-    e.preventDefault();
-    const { value } = e.currentTarget;
-    console.log({ value })
-    console.warn({ HomeSearchState: history.state })
-    this.drawMatchingContacts({ searchKey: 'full_name', searchValue: value ?? ''});
+  handleSearchInput() {
+    const nameSearchValue = select('#contact-name-search').value;
+    const tagSearchStr = select('#contact-tag-search').value;
+    const tagSearchValue = tagSearchStr.split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
+    this.drawMatchingContacts({ full_name: nameSearchValue, tagArray: tagSearchValue });
   }
 
   handleDeleteClick(e) {
@@ -128,21 +81,44 @@ class Home extends TemplateWrapper {
     const confirmed = confirm('Are you sure? This operation is irreversible!');
     if (!confirmed) return;
     const { id } = e.target.dataset;
-    const { value } = select('#contact-name-search');
-    this.appState.deleteContact(id).then((result) => this.drawMatchingContacts(value));
+    const { value: nameSearchValue } = select('#contact-name-search');
+    const { value: tagSearchString } = select('#contact-tag-search');
+    const tagSearchValue = tagSearchString.split(',').map((tag) => tag.trim());
+    this.appState.deleteContact(id).then((result) => this
+      .drawMatchingContacts({ full_name: nameSearchValue, tagArray: tagSearchValue}));
   }
 
-  // customElement - home
-  // render contacts that match the search
-  async drawMatchingContacts({ searchKey, searchValue } = {}) {
+  // render all contacts
+  async drawContacts() {
+    this.drawMatchingContacts();
+  }
+
+  /**
+   * Draws contacts that match all of the provided search parameters
+   * @param {{ full_name?: string, tagArray?: string[] }} The search values to use
+   */
+  async drawMatchingContacts({ full_name, tagArray }) {
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
     let contacts = await this.appState.getContacts();
-    if (searchKey !== undefined && searchValue !== undefined) {
-      const pattern = new RegExp(searchValue, 'i');
-      contacts = contacts.filter((contact) => pattern.test(contact[searchKey]));
+    let searchValueArr = [];
+    if (full_name) {
+      const namePattern = new RegExp(full_name, 'i');
+      contacts = contacts.filter((contact) => namePattern.test(contact.full_name));
+      searchValueArr.push(`a name matching "${full_name}"`);
+    }
+    if (tagArray) {
+      if (!Array.isArray(tagArray)) throw new TypeError(`Must pass tags as an array!`);
+      if (tagArray.length) {
+        const tagHash = hashIterable(tagArray);
+        contacts = contacts.filter((contact) => {
+          return Array.isArray(contact.tags) && contact.tags.some((tag) => tag in tagHash);
+        });
+        searchValueArr.push(`tags matching "${tagArray}"`);
+      }
     }
     const formatted = this.appState.formatContacts(contacts);
+    const searchValue = searchValueArr.join(' or ');
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
     this.insertionCallback(newList);
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));

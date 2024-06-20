@@ -14,16 +14,9 @@ const matchListTemplate = (matches) => matches.length && matches
   .join('\n');
 
 export default class Autocomplete {
-  constructor({
-    inputElement,
-    optionsLoader,
-    matchCallback = (input, option) => option.match(new RegExp(input, 'i')),
-    fillCallback = (input, option) =>  option.getAttribute('value'),
-  }) {
+  constructor(inputElement, optionsLoader) {
     this.input = inputElement;
-    this.matchCallback = matchCallback;
     this.optionsLoader = optionsLoader;
-    this.fillCallback = fillCallback;
     this.highlightedOption = null;
     this.backupValue = '';
     this.wrapper = null;
@@ -32,6 +25,14 @@ export default class Autocomplete {
 
     this.createWrapper();
     this.bindEvents();
+  }
+
+  matchesInput(input, option) {
+    return option.match(new RegExp(input, 'i'));
+  }
+
+  newFillValue(option) {
+    return option.getAttribute('value');
   }
 
   createWrapper() {
@@ -78,7 +79,7 @@ export default class Autocomplete {
     if (value.length === 0) return;
 
     const optionValues = [...await this.optionsLoader()];
-    const matches = this.matchCallback(value, optionValues);
+    const matches = this.matchesInput(value, optionValues);
     this.drawUI(matches);
   }
 
@@ -98,7 +99,8 @@ export default class Autocomplete {
         if (!this.highlightedOption) return;
         e.preventDefault();
         // replace the partial tag with the full one
-        this.input.value = this.fillCallback(this.input, this.highlightedOption);
+        // this.input.value = this.fillCallback(this.input, this.highlightedOption);
+        this.autoFillInputValue();
         this.clearUI();
         // this.highlightMatch(null);
       },
@@ -114,6 +116,12 @@ export default class Autocomplete {
     }
   }
 
+  autoFillInputValue() {
+    this.input.value = this.newFillValue(this.highlightedOption);
+    const inputSet = new InputEvent('input', { bubbles: true });
+    this.input.dispatchEvent(inputSet);
+  }
+
   handleMousedown(e) {
     if (e.target === this.input) {
       this.handleTextInput(e);
@@ -125,7 +133,7 @@ export default class Autocomplete {
     }
     e.preventDefault();
     const match = e.target;
-    this.input.value = this.fillCallback(this.input, match);
+    this.input.value = this.newFillValue(match);
     this.clearUI();
     this.input.focus({ focusVisible: true });
   }
@@ -152,17 +160,20 @@ export default class Autocomplete {
   }
 
   async drawUI(optionValues) {
-    const options = optionValues.length ? optionValues : ['(No matching tags)'];
+    this.clearUI();
+    const options = optionValues.length > 0
+      ? optionValues.filter((option) => option !== this.input.value) 
+      : ['(No matching tags)'];
+    if (!options.length) return;
     const listStr = matchListTemplate(options);
     const listItems = htmlToElements(listStr);
-    this.clearUI();
     this.listUI.setAttribute('visible', 'true');
     this.listUI.append(...listItems);
     this.highlightMatch(listItems[0]);
   }
 
   generateOverlayText(match) {
-    const newText = this.fillCallback(this.input, match);
+    const newText = this.newFillValue(match);
     this.overlay.textContent = newText;
   }
 
@@ -172,5 +183,7 @@ export default class Autocomplete {
     this.overlay.textContent = '';
     this.listUI.setAttribute('visible', 'false');
     selectAll('.autocomplete-ui-choice', this.listUI).forEach((li) => li.remove());
+    const uiClearedEvent = new CustomEvent('autocomplete-cleared');
+    this.input.dispatchEvent(uiClearedEvent);
   }
 }
