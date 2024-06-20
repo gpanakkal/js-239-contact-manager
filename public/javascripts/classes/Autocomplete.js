@@ -14,12 +14,12 @@ const matchListTemplate = (matches) => matches.length && matches
   .join('\n');
 
 export default class Autocomplete {
-  constructor(
+  constructor({
     inputElement,
     optionsLoader,
     matchCallback = (input, option) => option.match(new RegExp(input, 'i')),
-    fillCallback = (input, option) => input.value = option.getAttribute('value'),
-  ) {
+    fillCallback = (input, option) =>  option.getAttribute('value'),
+  }) {
     this.input = inputElement;
     this.matchCallback = matchCallback;
     this.optionsLoader = optionsLoader;
@@ -28,6 +28,7 @@ export default class Autocomplete {
     this.backupValue = '';
     this.wrapper = null;
     this.listUI = null;
+    this.overlay = null;
 
     this.createWrapper();
     this.bindEvents();
@@ -38,14 +39,35 @@ export default class Autocomplete {
     this.input.parentNode.appendChild(this.wrapper);
     this.wrapper.insertAdjacentElement('afterbegin', this.input);
     this.listUI = select('ul.autocomplete-ui', this.wrapper);
+    this.overlay = select('div.autocomplete-overlay', this.wrapper);
     this.input.setAttribute('autocomplete', 'off');
   }
 
   bindEvents() {
+    this.input.addEventListener('beforeinput', this.controlInput.bind(this));
     this.input.addEventListener('input', this.handleTextInput.bind(this));
     this.input.addEventListener('keydown', this.handleKeydown.bind(this));
-    this.listUI.addEventListener('mousedown', this.handleMousedown.bind(this));
+    document.body.addEventListener('mousedown', this.handleMousedown.bind(this));
     this.listUI.addEventListener('mouseover', this.handleMouseover.bind(this));
+  }
+
+  // prevent insertion of spaces
+  controlInput(e) {
+    console.warn({ beforeInputData: e.data, event: e })
+    if (e.inputType === 'insertText') {
+      if (e.data.match(/\s/)) {
+        e.preventDefault();
+        return;
+      }
+      const prevCharIsComma = this.input.value.slice(-1) === ','
+      if (prevCharIsComma) {
+        this.input.value = this.input.value + ' ';
+      }
+      if (e.data === ',') {
+        this.input.value += ', ';
+        e.preventDefault();
+      }
+    }
   }
 
   // redraw matches as needed
@@ -61,50 +83,56 @@ export default class Autocomplete {
   }
 
   handleKeydown(e) {
-    // const options = selectAll('.autocomplete-ui-choice', this.listUI);
-
     const keyActions = {
-      'ArrowDown': () => {
+      'ArrowDown': (e) => {
         e.preventDefault();
         const next = this.highlightedOption.nextElementSibling ?? this.listUI.firstElementChild;
         this.highlightMatch(next);
       },
-      'ArrowUp': () => {
+      'ArrowUp': (e) => {
         e.preventDefault();
         const prev = this.highlightedOption.previousElementSibling ?? this.listUI.lastElementChild;
         this.highlightMatch(prev);
       },
-      'Tab': () => {
+      'Tab': (e) => {
         if (!this.highlightedOption) return;
         e.preventDefault();
         // replace the partial tag with the full one
-        this.fillCallback(this.input, this.highlightedOption);
+        this.input.value = this.fillCallback(this.input, this.highlightedOption);
         this.clearUI();
         // this.highlightMatch(null);
       },
-      'Escape': () => {
+      'Escape': (e) => {
         this.input.value = this.backupValue;
         this.clearUI();
       },
-      'Enter': () => this.clearUI(),
+      'Enter': (e) => this.clearUI(), // this also submits the form since it doesn't prevent default
     }
-
+    
     if (e.key in keyActions) {
-      keyActions[e.key]();
+      keyActions[e.key](e);
     }
   }
 
   handleMousedown(e) {
+    if (e.target === this.input) {
+      this.handleTextInput(e);
+      return;
+    }
+    if (!e.target.classList.contains('autocomplete-ui-choice')) {
+      this.clearUI();
+      return;
+    }
     e.preventDefault();
     const match = e.target;
-    this.fillCallback(this.input, match);
+    this.input.value = this.fillCallback(this.input, match);
     this.clearUI();
     this.input.focus({ focusVisible: true });
   }
 
   handleMouseover(e) {
     const match = e.target;
-    if (e.target.classList.contains('.autocomplete-ui-choice')) {
+    if (e.target.classList.contains('autocomplete-ui-choice')) {
       this.highlightMatch(match);
     }
   }
@@ -120,23 +148,28 @@ export default class Autocomplete {
     optionList.forEach((li) => li.classList.remove('highlighted'));
     match?.classList.add('highlighted');
     this.highlightedOption = match;
+    this.generateOverlayText(match);
   }
 
   async drawUI(optionValues) {
-    // generate the list
     const options = optionValues.length ? optionValues : ['(No matching tags)'];
     const listStr = matchListTemplate(options);
     const listItems = htmlToElements(listStr);
     this.clearUI();
-    if (listItems[0])
     this.listUI.setAttribute('visible', 'true');
     this.listUI.append(...listItems);
     this.highlightMatch(listItems[0]);
   }
 
+  generateOverlayText(match) {
+    const newText = this.fillCallback(this.input, match);
+    this.overlay.textContent = newText;
+  }
+
   clearUI() {
     this.highlightedOption = null;
     this.listUI.innerHTML = null;
+    this.overlay.textContent = '';
     this.listUI.setAttribute('visible', 'false');
     selectAll('.autocomplete-ui-choice', this.listUI).forEach((li) => li.remove());
   }

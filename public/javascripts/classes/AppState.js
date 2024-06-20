@@ -31,7 +31,7 @@ export default class AppState {
     return contacts.map((contact) => {
       const formatted = {
         phone_number: formatNumber(contact.phone_number),
-        tags: contact.tags?.split(',').map((tag) => tag.trim()).join(', '),
+        // tags: contact.tags?.split(',').map((tag) => tag.trim()).join(', '),
       };
       return { ...contact, ...formatted };
     });
@@ -70,10 +70,19 @@ export default class AppState {
   }
 
   async getTags() {
-    return new Set((await this.getContacts()).reduce((str, contact) => {
-      if (!contact.tags) return str;
-      if (!str) return contact.tags;
-      return [str, contact.tags].join(',');
-    }, '').split(','));
+    const contacts = await this.getContacts();
+    const allTags = contacts.flatMap((contact) => contact.tags ?? []);
+    const uniqueTags = new Set(allTags);
+    return uniqueTags;
+      
+      
+    //   {
+    //   if (contact.tags) {
+    //     split = contact.tags.split(',').map((tag) => tag.trim());
+    //   }
+    //   if (!contact.tags) return arr;
+    //   if (!str) return contact.tags;
+    //   return [str, contact.tags].join(',');
+    // }, []));
   }
 }

@@ -33,15 +33,6 @@ const contactForm = /* html */ `
   </form>
 </script>`;
 
-// const contactFormTags = /* html */ `
-// <script id="contactFormTags" type="text/x-handlebars" nonce=''>
-//   <ul class="autocomplete-ui">
-//     {{#each tags}}
-//       <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
-//     {{/each}}
-//   </ul>
-// </script>`;
-
 const contactFormHint = /* html */ `
 <script id="contactFormHint" type="text/x-handlebars" nonce=''>
   <small class="form-hint">{{message}}</small>
@@ -65,8 +56,6 @@ class ContactForm extends TemplateWrapper {
   }
 
   drawAutocomplete() {
-    const tagInput = select('#contact-form #tags');
-
     // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
     // sorted by the precedence of the match
     const tagMatcher = (tagInputText, tagValues) => {
@@ -79,23 +68,21 @@ class ContactForm extends TemplateWrapper {
         return !tagPresent && lastTagMatches;
       });
       return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
-
-      // return !tags.slice(0, -1).includes(tagValue) && tagValue.includes(lastTag);
     }
 
     const tagUpdateCb = (input, option) => {
       const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
       const newTagStr = `${option.getAttribute('value')}, `;
       const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
-      input.value = withNewTag;
+      return withNewTag;
     };
 
-    new Autocomplete(
-      tagInput,
-      this.appState.getTags.bind(this.appState),
-      tagMatcher,
-      tagUpdateCb,
-    );
+    new Autocomplete({
+      inputElement: select('#contact-form #tags'),
+      optionsLoader: this.appState.getTags.bind(this.appState),
+      matchCallback: tagMatcher,
+      fillCallback: tagUpdateCb,
+    });
   }
 
   // customElement - contactForm

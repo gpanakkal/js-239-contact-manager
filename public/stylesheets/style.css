@@ -283,18 +283,25 @@ input.invalid {
 .autocomplete-wrapper {
   /* box-sizing: border-box; */
   padding: 0px !important;
+  position: relative;
 }
 
 .autocomplete-ui {
+  position: absolute;
+  width: 100%;
   box-sizing: border-box;
-  border: none;
   padding: 0px;
   margin: 0px;
+  z-index: 1;
+  
 }
 
 .autocomplete-ui[visible="true"] {
-  border: 1px solid #eee;
+  /* border: 1px solid #eee; */
   padding: 6px 12px;  
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: rgba(240, 240, 240, 0.7);
 }
 
 .autocomplete-ui-choice {
@@ -315,4 +322,13 @@ input.invalid {
   color: #fff;
   background-color: #6f5499;
   cursor: pointer;
+}
+
+.autocomplete-overlay {
+  position: absolute;
+  /* top: 0px;
+  left: 0px; */
+  z-index: 1;
+  opacity: 50%;
+  padding: 6px 12px;
 }
