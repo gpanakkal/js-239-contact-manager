@@ -74,15 +74,5 @@ export default class AppState {
     const allTags = contacts.flatMap((contact) => contact.tags ?? []);
     const uniqueTags = new Set(allTags);
     return uniqueTags;
-      
-      
-    //   {
-    //   if (contact.tags) {
-    //     split = contact.tags.split(',').map((tag) => tag.trim());
-    //   }
-    //   if (!contact.tags) return arr;
-    //   if (!str) return contact.tags;
-    //   return [str, contact.tags].join(',');
-    // }, []));
   }
 }

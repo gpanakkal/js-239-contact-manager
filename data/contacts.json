@@ -4,167 +4,167 @@
     "full_name": "Victor Reyes",
     "email": "vpr@example.ca",
     "phone_number": "3236543210",
-    "tags": "work,friend"
+    "tags": ["work", "friend"]
   },
   {
     "full_name": "Example Contact",
     "phone_number": "",
     "email": "b@a.bop",
-    "tags": "weird?tag",
+    "tags": ["weird?tag"],
     "id": 4
   },
   {
     "full_name": "John Doe",
     "phone_number": "",
     "email": "john@doe.com",
-    "tags": "anon",
+    "tags": ["anon"],
     "id": 5
   },
   {
     "full_name": "test creation",
     "phone_number": "(800)2049555",
     "email": "bca@abc.com",
-    "tags": "",
+    "tags": [],
     "id": 12
   },
   {
     "full_name": "newest contact!",
     "phone_number": "",
     "email": "afasdf09@alksdj.com",
-    "tags": "enemy",
+    "tags": ["enemy"],
     "id": 13
   },
   {
     "full_name": "testing contact form",
     "phone_number": "0215101489",
     "email": "xyz@zyx.com",
-    "tags": "example",
+    "tags": ["example"],
     "id": 14
   },
   {
     "full_name": "New Contact",
     "phone_number": "000-000-1202",
     "email": "abcd@def.com",
-    "tags": "new",
+    "tags": ["new"],
     "id": 15
   },
   {
     "full_name": "New Contact",
     "phone_number": "000-000-1202",
     "email": "abcd@def.com",
-    "tags": "new",
+    "tags": ["new"],
     "id": 16
   },
   {
     "full_name": "to delete",
     "phone_number": "9235098514",
     "email": "b@a.com",
-    "tags": "manager",
+    "tags": ["manager"],
     "id": 17
   },
   {
     "full_name": "Isaac B.",
     "phone_number": "",
     "email": "bisaac@b.com",
-    "tags": "",
+    "tags": [],
     "id": 18
   },
   {
     "full_name": "jeff",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 19
   },
   {
     "full_name": "jeff",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 20
   },
   {
     "full_name": "oiwuer",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 21
   },
   {
     "full_name": "ploblui",
     "phone_number": "8002024045",
     "email": "",
-    "tags": "example",
+    "tags": ["example"],
     "id": 22
   },
   {
     "full_name": "testing form submit",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 23
   },
   {
     "full_name": "testing submit again",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 24
   },
   {
     "full_name": "a",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 25
   },
   {
     "full_name": "zasxv",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 26
   },
   {
     "full_name": "badbasdfa",
     "phone_number": "",
     "email": "2@two.com",
-    "tags": "",
+    "tags": [],
     "id": 27
   },
   {
     "full_name": "545",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 29
   },
   {
     "full_name": "final test",
     "phone_number": "",
     "email": "",
-    "tags": "",
+    "tags": [],
     "id": 30
   },
   {
     "full_name": "a",
     "phone_number": "1001111234",
     "email": "b@a.com",
-    "tags": "",
+    "tags": [],
     "id": 31
   },
   {
     "full_name": "contact list should render in full",
     "phone_number": "",
     "email": "b@a.com",
-    "tags": "",
+    "tags": [],
     "id": 32
   },
   {
     "full_name": "outirgwe",
     "phone_number": "1802024045",
     "email": "h@c.com",
-    "tags": "error",
+    "tags": ["error"],
     "id": 33
   }
 ]
