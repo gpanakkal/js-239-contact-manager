@@ -152,5 +152,26 @@
     "email": "",
     "tags": "",
     "id": 30
+  },
+  {
+    "full_name": "a",
+    "phone_number": "1001111234",
+    "email": "b@a.com",
+    "tags": "",
+    "id": 31
+  },
+  {
+    "full_name": "contact list should render in full",
+    "phone_number": "",
+    "email": "b@a.com",
+    "tags": "",
+    "id": 32
+  },
+  {
+    "full_name": "outirgwe",
+    "phone_number": "1802024045",
+    "email": "h@c.com",
+    "tags": "error example",
+    "id": 33
   }
 ]

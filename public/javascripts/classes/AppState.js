@@ -26,11 +26,11 @@ export default class AppState {
 
   // AppState
   async getTags() {
-    return [...new Set((await this.getContacts()).reduce((str, contact) => {
+    return new Set((await this.getContacts()).reduce((str, contact) => {
       if (!contact.tags) return str;
       if (!str) return contact.tags;
       return [str, contact.tags].join(',');
-    }, '').split(','))];
+    }, '').split(','));
   }
 
   // AppState

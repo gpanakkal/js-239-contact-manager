@@ -1,3 +1,4 @@
+import Autocomplete from "../classes/Autocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js";
 import { hashIterable, select, selectAll } from "../lib/helpers.js";
 
@@ -24,8 +25,6 @@ const contactForm = /* html */ `
         <label for="tags">Tags:</label>
         <div class="input-box">
           <input type='text' name='tags' id="tags" value="{{tags}}">
-          <div class="autocomplete-wrapper">
-          </div>
         </div>
       <label></label>
       <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
@@ -34,14 +33,14 @@ const contactForm = /* html */ `
   </form>
 </script>`;
 
-const contactFormTags = /* html */ `
-<script id="contactFormTags" type="text/x-handlebars" nonce=''>
-  <ul class="autocomplete-ui">
-    {{#each tags}}
-      <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
-    {{/each}}
-  </ul>
-</script>`;
+// const contactFormTags = /* html */ `
+// <script id="contactFormTags" type="text/x-handlebars" nonce=''>
+//   <ul class="autocomplete-ui">
+//     {{#each tags}}
+//       <li class="autocomplete-ui-choice" value={{this}}>{{this}}</li>
+//     {{/each}}
+//   </ul>
+// </script>`;
 
 const contactFormHint = /* html */ `
 <script id="contactFormHint" type="text/x-handlebars" nonce=''>
@@ -50,21 +49,33 @@ const contactFormHint = /* html */ `
 
 class ContactForm extends TemplateWrapper {
   constructor(insertionCallback, appState) {
-    super([contactForm, contactFormTags, contactFormHint], insertionCallback, appState);
+    super([contactForm, contactFormHint], insertionCallback, appState);
   }
 
   bindContactFormEvents() {
     select('#contact-form').addEventListener('submit', this.handleFormSubmit.bind(this));
-    const tagInput = select('#tags');
-    // tagInput.addEventListener('input', this.handleTagInput.bind(this));
-    // tagInput.addEventListener('keydown', this.handleTagNav.bind(this));
-    // tagInput.querySelector
   }
 
   async draw(params = undefined) {
     const contact = params?.id ? await this.appState.findContact(params.id) : null;
     super.draw(contact);
     this.bindContactFormEvents();
+
+    const tagInput = select('#contact-form #tags');
+
+    const tagUpdateCb = (input, option) => {
+      const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
+      const newTagStr = `${option.getAttribute('value')}, `;
+      const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
+      input.value = withNewTag;
+    };
+
+    new Autocomplete(
+      tagInput,
+      this.appState.getTags.bind(this.appState),
+      this.tagMatcher,
+      tagUpdateCb,
+  ); // will this persist? presumably as long as it has event handlers
     select('#full_name').focus();
   }
 
@@ -73,7 +84,7 @@ class ContactForm extends TemplateWrapper {
     selectAll('.form-hint').forEach((hint) => hint.remove());
     [...form.querySelectorAll('.invalid')]
       .forEach((input) => input.classList.remove('invalid'));
-    const hint = this.templates.contactFormHint;
+    const hint = this.findTemplate('contactFormHint');
     conditions.forEach(([key, { message }]) => {
       const location = form.querySelector(`input[id="${key}"]`);
       const label = form.querySelector(`label[for="${key}"`);
@@ -112,7 +123,7 @@ class ContactForm extends TemplateWrapper {
     const formObj = Object.fromEntries(new FormData(e.currentTarget));
     const failedConditions = this.validateContactForm(formObj);
     if (failedConditions.length) {
-      alert(`Failed conditions: ${failedConditions.map(([field, obj]) => obj.message).join(', ')}`)
+      // alert(`Failed conditions: ${failedConditions.map(([field, obj]) => obj.message).join(', ')}`)
       this.drawFormHints(e.currentTarget, failedConditions);
       return false;
     }
@@ -128,86 +139,94 @@ class ContactForm extends TemplateWrapper {
     document.dispatchEvent(navHome);
   }
 
-  // customElement - contactForm
-  async processTags(tagString) {
-    const allTags = await this.appState.getTags();
-    const tags = tagString.trim().split(',').map((tag) => tag.trim());
+  // // customElement - contactForm
+  // async processTags(tagString) {
+  //   const allTags = await this.appState.getTags();
+  //   const tags = tagString.trim().split(',').map((tag) => tag.trim());
+  //   const lastTag = tags[tags.length - 1];
+  //   const currentTags = hashIterable(tags.slice(0, -1));
+  //   const tagPattern = new RegExp(lastTag, 'i');
+  //   const matches = allTags.filter((tag) => !(tag in currentTags) && tag.match(tagPattern));
+  //   console.log({tagString, lastTag, matches});
+  //   return [tags, matches];
+  // }
+
+  // given a string of comma-separated tags, check if the final tag matches tagOption
+  tagMatcher(tagInputText, tagValue) {
+    const tags = tagInputText.trim().split(',').map((tag) => tag.trim());
     const lastTag = tags[tags.length - 1];
-    const currentTags = hashIterable(tags.slice(0, -1));
-    const tagPattern = new RegExp(lastTag, 'i');
-    const matches = allTags.filter((tag) => !(tag in currentTags) && tag.match(tagPattern));
-    console.log({tagString, lastTag, matches});
-    return [tags, matches];
+    const lastTagPattern = new RegExp(`^${lastTag}`, 'i');
+    return tagValue.match(lastTagPattern) && !tags.slice(0, -1).includes(tagValue);
   }
 
   // customElement - contactForm
-  findTag(value) {
-    const selector = `.autocomplete-ui-choice[value="${value}"]`;
-    console.log(selector, select(selector));
-    return select(selector);
-  }
+  // findTag(value) {
+  //   const selector = `.autocomplete-ui-choice[value="${value}"]`;
+  //   console.log(selector, select(selector));
+  //   return select(selector);
+  // }
 
   // customElement - contactForm
-  highlightMatchingTag(tag) {
-    const tagList = selectAll('.autocomplete-ui-choice');
-    tagList.forEach((li) => li.classList.remove('highlighted'));
-    tag?.classList.add('highlighted');
-  }
+  // highlightMatchingTag(tag) {
+  //   const tagList = selectAll('.autocomplete-ui-choice');
+  //   tagList.forEach((li) => li.classList.remove('highlighted'));
+  //   tag?.classList.add('highlighted');
+  // }
 
   // customElement - contactForm
-  async handleTagInput(e) {
-    const field = select('#tags');
-    selectAll('li.autocomplete-ui-choice').forEach((el) => el.remove());
-    const { value: tagString } = field;
-    if (tagString.length === 0) return;
-    const [tags, matches] = await this.processTags(tagString);
+  // async handleTagInput(e) {
+  //   const field = select('#tags');
+  //   selectAll('li.autocomplete-ui-choice').forEach((el) => el.remove());
+  //   const { value: tagString } = field;
+  //   if (tagString.length === 0) return;
+  //   // const [tags, matches] = await this.processTags(tagString);
 
-    this.appState.setPage({ tagInput: tags, matches, bestMatch: 0 });
-    const suggestions = this.templates.contactFormTags;
+  //   this.appState.setPage({ tagInput: tags, matches, bestMatch: 0 });
+  //   const suggestions = this.templates.contactFormTags;
 
-    select('ul.autocomplete-ui').innerHTML = suggestions({ tags: matches });
-    const firstTag = select('.autocomplete-ui-choice');
+  //   select('ul.autocomplete-ui').innerHTML = suggestions({ tags: matches });
+  //   const firstTag = select('.autocomplete-ui-choice');
 
-    this.highlightMatchingTag(firstTag);
-  }
+  //   this.highlightMatchingTag(firstTag);
+  // }
 
   // customElement - contactForm
-  handleTagNav(e) {
-    const field = select('#tags');
-    const tagList = selectAll('.autocomplete-ui-choice');
-    // const { tagInput, matches, bestMatch } = this.appState.;
-    const nextIndex = (i) => i >= matches.length - 1 ? 0 : i + 1;
-    const prevIndex = (i) => i <= 0 ? matches.length - 1 : i - 1;
-    const selectNew = (i) => {
-      this.appState.updatePage({ bestMatch: i });
-      this.highlightMatchingTag(this.findTag(matches[i]));
-    }
+  // handleTagNav(e) {
+  //   const field = select('#tags');
+  //   const tagList = selectAll('.autocomplete-ui-choice');
+  //   // const { tagInput, matches, bestMatch } = this.appState.;
+  //   const nextIndex = (i) => i >= matches.length - 1 ? 0 : i + 1;
+  //   const prevIndex = (i) => i <= 0 ? matches.length - 1 : i - 1;
+  //   const selectNew = (i) => {
+  //     this.appState.updatePage({ bestMatch: i });
+  //     this.highlightMatchingTag(this.findTag(matches[i]));
+  //   }
 
-    const keyActions = {
-      'ArrowDown': () => {
-        e.preventDefault();
-        selectNew(nextIndex(bestMatch));
-      },
-      'ArrowUp': () => {
-        e.preventDefault();
-        selectNew(prevIndex(bestMatch));
-      },
-      'Tab': () => {
-        if (bestMatch === undefined) return;
-        e.preventDefault();
-        // replace the partial tag with the full one
-        const newTag = this.findTag(bestMatch);
-        console.log({ bestMatch, newTag })
-        const newTagString = [...tagInput.slice(0, -1), newTag].join(', ');
-        field.value = newTagString;
-        selectNew(null);
-      },
-    }
+  //   const keyActions = {
+  //     'ArrowDown': () => {
+  //       e.preventDefault();
+  //       selectNew(nextIndex(bestMatch));
+  //     },
+  //     'ArrowUp': () => {
+  //       e.preventDefault();
+  //       selectNew(prevIndex(bestMatch));
+  //     },
+  //     'Tab': () => {
+  //       if (bestMatch === undefined) return;
+  //       e.preventDefault();
+  //       // replace the partial tag with the full one
+  //       const newTag = this.findTag(bestMatch);
+  //       console.log({ bestMatch, newTag })
+  //       const newTagString = [...tagInput.slice(0, -1), newTag].join(', ');
+  //       field.value = newTagString;
+  //       selectNew(null);
+  //     },
+  //   }
 
-    if (e.key in keyActions) {
-      keyActions[e.key]();
-    }
-  }
+  //   if (e.key in keyActions) {
+  //     keyActions[e.key]();
+  //   }
+  // }
 
   // temporary
   // async drawEditContactForm() {

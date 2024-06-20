@@ -67,7 +67,7 @@ const rollOverAccess = (arr, i) => {
   return arr[index];
 }
 
-const select = (selector) => document.querySelector(selector);
+const select = (selector, parent = document) => parent.querySelector(selector);
 
 const selectAll = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
