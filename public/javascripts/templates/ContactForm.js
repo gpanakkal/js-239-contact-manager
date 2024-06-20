@@ -60,8 +60,28 @@ class ContactForm extends TemplateWrapper {
     const contact = params?.id ? await this.appState.findContact(params.id) : null;
     super.draw(contact);
     this.bindContactFormEvents();
+    this.drawAutocomplete();
+    select('#full_name').focus();
+  }
 
+  drawAutocomplete() {
     const tagInput = select('#contact-form #tags');
+
+    // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
+    // sorted by the precedence of the match
+    const tagMatcher = (tagInputText, tagValues) => {
+      const tags = tagInputText.split(',').map((tag) => tag.trim());
+      const lastTag = tags[tags.length - 1].toLowerCase();
+      const otherTags = hashIterable(tags.slice(0, -1));
+      const matchingTags = tagValues.filter((value) => {
+        const tagPresent = (value.toLowerCase() in otherTags);
+        const lastTagMatches = value.toLowerCase().includes(lastTag);
+        return !tagPresent && lastTagMatches;
+      });
+      return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
+
+      // return !tags.slice(0, -1).includes(tagValue) && tagValue.includes(lastTag);
+    }
 
     const tagUpdateCb = (input, option) => {
       const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
@@ -73,10 +93,9 @@ class ContactForm extends TemplateWrapper {
     new Autocomplete(
       tagInput,
       this.appState.getTags.bind(this.appState),
-      this.tagMatcher,
+      tagMatcher,
       tagUpdateCb,
-  ); // will this persist? presumably as long as it has event handlers
-    select('#full_name').focus();
+    );
   }
 
   // customElement - contactForm
@@ -150,14 +169,6 @@ class ContactForm extends TemplateWrapper {
   //   console.log({tagString, lastTag, matches});
   //   return [tags, matches];
   // }
-
-  // given a string of comma-separated tags, check if the final tag matches tagOption
-  tagMatcher(tagInputText, tagValue) {
-    const tags = tagInputText.trim().split(',').map((tag) => tag.trim());
-    const lastTag = tags[tags.length - 1];
-    const lastTagPattern = new RegExp(`^${lastTag}`, 'i');
-    return tagValue.match(lastTagPattern) && !tags.slice(0, -1).includes(tagValue);
-  }
 
   // customElement - contactForm
   // findTag(value) {

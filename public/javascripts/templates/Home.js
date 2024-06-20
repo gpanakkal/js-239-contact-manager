@@ -47,11 +47,10 @@ class Home extends TemplateWrapper {
     super([homeBar, contactList], insertionCallback, appState);
   }
 
-  async draw(params = undefined) {
-    const fullState = await this.appState.get();
-    const contacts = this.appState.formatContacts(fullState.contacts);
-    const formatted = { ...fullState, contacts };
-    super.draw(formatted);
+  async draw() {
+    const contacts = await this.appState.getContacts();
+    const formatted = this.appState.formatContacts(contacts);
+    super.draw({ contacts: formatted });
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }

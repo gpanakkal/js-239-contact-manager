@@ -40,5 +40,5 @@ class ContactManager {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const app = new ContactManager(select('#app-container'));
+  new ContactManager(select('#app-container'));
 });

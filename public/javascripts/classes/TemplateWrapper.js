@@ -2,33 +2,16 @@ import * as helpers from '../lib/helpers.js';
 
 export default class TemplateWrapper {
   static createTemplate(handlebarsTemplate) {
-    this.templates = handlebarsTemplate.map((str) => {
-      const script = helpers.htmlToElements(str)[0];
-      const compiled = Handlebars.compile(script.innerHTML);
-      return { id: script.id, compiled };
-    });
-  }
-
-  /**
-   * 
-   * @param {string} templateString 
-   * @returns {HTMLCollection}
-   */
-  static createElements(templateString) {
-    const script = 
-    this.templates = templateString.map((str) => {
-      const script = helpers.htmlToElements(str)[0];
-      const compiled = Handlebars.compile(script.innerHTML);
-      return { id: script.id, compiled };
-    });
+    const script = helpers.htmlToElements(handlebarsTemplate)[0];
+    const compiled = Handlebars.compile(script.innerHTML);
+    return { id: script.id, compiled };
   }
 
   constructor (templateStrings, insertionCallback, appState) {
     this.templates = [];
     this.insertionCallback = insertionCallback; // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)
     this.appState = appState;
-    this.templates = TemplateWrapper.createTemplates
-    this.createTemplate(templateStrings);
+    this.templates = templateStrings.map(TemplateWrapper.createTemplate);
   }
 
   // draw the element, passing in relevant state

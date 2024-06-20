@@ -10,7 +10,7 @@
     "full_name": "Example Contact",
     "phone_number": "",
     "email": "b@a.bop",
-    "tags": "",
+    "tags": "weird?tag",
     "id": 4
   },
   {
@@ -24,7 +24,7 @@
     "full_name": "test creation",
     "phone_number": "(800)2049555",
     "email": "bca@abc.com",
-    "tags": null,
+    "tags": "",
     "id": 12
   },
   {
@@ -133,13 +133,6 @@
     "id": 27
   },
   {
-    "full_name": "badbasdfa",
-    "phone_number": "",
-    "email": "2@two.com",
-    "tags": "",
-    "id": 28
-  },
-  {
     "full_name": "545",
     "phone_number": "",
     "email": "",
@@ -171,7 +164,7 @@
     "full_name": "outirgwe",
     "phone_number": "1802024045",
     "email": "h@c.com",
-    "tags": "error example",
+    "tags": "error",
     "id": 33
   }
 ]

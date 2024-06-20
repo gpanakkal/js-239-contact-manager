@@ -50,8 +50,8 @@ const htmlToElements = (htmlString) => {
   return children;
 }
 
-const hashIterable = (iterable) => [].reduce
-  .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
+const hashIterable = (iterable, transform = (x) => x) => [].reduce
+  .call(iterable, (acc, val, i) => Object.assign(acc, { [transform(val)]: i }), {});
 
 // unused
 const queryString = (formObj) => {

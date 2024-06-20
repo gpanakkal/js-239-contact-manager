@@ -5,6 +5,8 @@ import TemplateWrapper from "./TemplateWrapper.js";
 
 */
 export default class Router {
+  static #getPath = (url) =>  url.hash || url.pathname;
+
   static #routeMatchRegex(routePath) {
     const patternString = routePath
       .split('/')
@@ -53,10 +55,10 @@ export default class Router {
       const historyState = history.state;
       // if (!e.state) { console.error(e);  }
       console.warn({ popStateEventHistory: historyState });
-      const path = new URL(historyState.href).pathname;
-      const route = this.#matchRoute(path || '/');
+      const path = Router.#getPath(new URL(historyState.href));
+      const route = this.#matchRoute(path);
       
-      history.replaceState(historyState, '', path); // seems unnecessary
+      // history.replaceState(historyState, '', path); // seems unnecessary
       const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
       console.log('popstate routing to', { historyState, route, path, params })
       this.#draw(this.routes[route], params);

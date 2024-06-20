@@ -56,7 +56,7 @@ export default class Autocomplete {
     if (value.length === 0) return;
 
     const optionValues = [...await this.optionsLoader()];
-    const matches = optionValues.filter((optionValue) => this.matchCallback(value, optionValue));
+    const matches = this.matchCallback(value, optionValues);
     this.drawUI(matches);
   }
 
