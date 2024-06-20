@@ -12,22 +12,23 @@ export default class TemplateWrapper {
     this.templates = templateStrings.map((str) => {
       const script = helpers.htmlToElements(str)[0];
       const compiled = Handlebars.compile(script.innerHTML);
-      return [script.id, compiled];
+      return { id: script.id, compiled };
     });
   }
 
-  // draw the element, passing in the app state
-  draw(state) {
-    console.log({state, caller: this});
+  // draw the element, passing in relevant state
+  draw(elementValues, useHistory = true) {
+    const historyState = useHistory ? history.state?.currentPage : {};
+    const fullValues = Object.assign({}, elementValues, historyState);
+    console.log({fullValues, caller: this});
     for (let i = 0; i < this.templates.length; i += 1) {
-      const html = this.templates[i][1](state);
-      // console.log(html); // temporary
+      const html = this.templates[i].compiled(fullValues);
       // insert the element into the DOM using the insertion callback
       this.insertionCallback(html);
     }
   }
 
   findTemplate(name) {
-    return this.templates.find(([id]) => id === name)[1];
+    return this.templates.find(({ id }) => id === name).compiled;
   }
 }

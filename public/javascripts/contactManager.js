@@ -27,37 +27,15 @@ class ContactManager {
       '#contacts/edit/:id': this.pages(ContactForm),
       '#contacts/delete/:id': this.pages(), // remove this - should be a contact API request only
     }
-    this.router = new Router(this);
+    this.router = new Router({
+      appRoutes: this.routes,
+      appContainer: this.container,
+      appState: this.state,
+    });
   }
 
   pages(...templateWrappers) {
     return templateWrappers.map((wrapper) => wrapper(this.insertionCallback, this.state));
-  }
-
-  // custom element - home?
-  // split to home + appState method
-  async deleteContact() {
-    const { id } = this.getPageState();
-    const contact = await this.findContact(id);
-    if (!contact) {
-      alert(`Invalid id: ${id}`);
-      this.navTo('/');
-    }
-    
-    const confirmed = confirm('Are you sure? This operation is irreversible!');
-    if (!confirmed) {
-      this.navTo('/');
-      return;
-    } 
-
-    try {
-      const result = await xhrRequest('DELETE', `/api/contacts/${id}`);
-      await this.fetchContacts();
-    } catch(e) {
-      console.error(e);
-    } finally {
-      history.replaceState(history.state, '', this.origin);
-    }
   }
 }
 

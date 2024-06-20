@@ -280,7 +280,7 @@ input.invalid {
   border-color: #b94a48;
 }
 
-.autocomplete-wrapper {
+.autocomplete-ui {
   box-sizing: border-box;
   border: 1px solid #eee;
   

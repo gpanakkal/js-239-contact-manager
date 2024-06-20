@@ -1,29 +1,21 @@
 import contactAPI from "../lib/contactAPI.js";
 import { formatNumber, updateObject } from "../lib/helpers.js";
-import LocalStorageManager from "../lib/localStorageManager.js";
+// import LocalStorageManager from "../lib/localStorageManager.js";
 
 /*
-  Manage application state (contacts, tags, maybe page state)
+  Manage application state (contacts, tags, maybe page state) so it doesn't have to be fetched
+  every time.
 */
 export default class AppState {
-  #contacts = null;
-  
-  constructor() {
-    const state = {
-      contacts: this.#contacts,
-      pageState: null,
-    };
-    this.storage = new LocalStorageManager(state);
-    // this.#fetchContacts();
-  }
+  #contacts = [];
 
   async get() {
     const contacts = await this.getContacts();
-    const pageState = this.getPage();
+    // const pageState = this.getPage();
 
     return {
       contacts,
-      pageState,
+      // pageState,
     };
   }
 
@@ -44,7 +36,7 @@ export default class AppState {
   // AppState
   // requires that all CUD operations on contacts correctly update this.#contacts
   async getContacts() {
-    if (this.#contacts === null) {
+    if (this.#contacts.length === 0) {
       await this.#fetchContacts();
     }
     return this.#contacts.slice();
@@ -78,7 +70,7 @@ export default class AppState {
     const result = await contactAPI.createContact(newContact);
     console.log({createResult: result});
     if (result) {
-      this.#contacts.push(newContact);
+      this.#contacts.push(JSON.parse(result));
     }
     return result;
   }
@@ -91,7 +83,7 @@ export default class AppState {
       const existing = await this.findContact(updatedContact.id);
       const original = JSON.parse(JSON.stringify(existing))
       console.log({ original, updatedContact })
-      const [updated, missingKeys] = updateObject(existing, updatedContact);
+      const updated = updateObject(existing, updatedContact);
       Object.assign(existing, updated);
       console.log({merged: existing})
     }
@@ -109,25 +101,26 @@ export default class AppState {
     return deleteResult;
   }
 
-  // fetch from localStorage
-  getPage() {
-    return this.storage.read('pageState');
-  }
+  // temporary
+  // // fetch from localStorage
+  // getPage() {
+  //   return this.storage.read('pageState');
+  // }
 
-  // overwrite page state. Default to this when navigating.
-  setPage(newState) {
-    this.storage.replace('pageState', newState);
-  }
+  // // overwrite page state. Default to this when navigating.
+  // setPage(newState) {
+  //   this.storage.replace('pageState', newState);
+  // }
 
-  // existing state must have the same properties
-  updatePage(updates) {
-    this.storage.update('pageState', updates);
-    this.setPage({...this.getPage(), ...updates});
-  }
+  // // existing state must have the same properties
+  // updatePage(updates) {
+  //   this.storage.update('pageState', updates);
+  //   this.setPage({...this.getPage(), ...updates});
+  // }
 
-  // reset values, but retain fields
-  resetPage() {
-    this.storage.reset('pageState');
-  }
+  // // reset values, but retain fields
+  // resetPage() {
+  //   this.storage.reset('pageState');
+  // }
 
 }

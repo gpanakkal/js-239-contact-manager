@@ -33,12 +33,6 @@ const formatNumber = (phoneNumber) => {
     : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 $2-$3-$4');
 };
 
-// const formDataToJson = (formData) => {
-//   const obj = [...formData.entries()]
-//     .reduce((acc, pair) => Object.assign(acc, { [pair[0]]: pair[1] }), {});
-//   return JSON.stringify(obj);
-// }
-
 const formToJson = (form) => JSON.stringify(Object.fromEntries(new FormData(form)));
 
 const getFormValues = (e) => [...e.currentTarget.elements]
@@ -59,7 +53,7 @@ const htmlToElements = (htmlString) => {
 const hashIterable = (iterable) => [].reduce
   .call(iterable, (acc, val, i) => Object.assign(acc, { [val]: i }), {});
 
-// untested
+// unused
 const queryString = (formObj) => {
   return Object.entries(formObj).reduce((acc, pair) => {
     const [key, value] = pair.map(encodeURIComponent);
@@ -75,7 +69,7 @@ const rollOverAccess = (arr, i) => {
 
 const select = (selector) => document.querySelector(selector);
 
-const selectAll = (selector) => [...document.querySelectorAll(selector)];
+const selectAll = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 
 /**
  * Given two array-like objects, immutably remove each element from iterator1 found in iterator2
@@ -95,27 +89,36 @@ const setSubtract = (iterator1, iterator2) => {
 const stringSubtract = (first, second) => arraySubtract(first, second).join('');
 
 /**
+ * Get the exclusive disjunction of two objects' keys
+ * @param {object} first
+ * @param {object} second 
+ * @returns {{ first: string[], second: string[] }}
+ */
+const uniqueKeys = (first, second) => {
+  const allKeys = new Set(Object.keys(first).concat(Object.keys(second)));
+  return [...allKeys].reduce((unique, key) => {
+    if (!(key in first)) unique.second[key] = second[key];
+    if (!(key in second)) unique.first[key] = first[key];
+    return unique;
+  }, { first: [], second: [] });
+}
+
+/**
  * Immutably update an object without adding new properties
  * @param {object} original 
  * @param {object} updates 
- * @param {function} updateCb A function to execute to update the object
+ * @param {function} updateCb A function to execute to update the object.
+ * If not specified, performs direct reassignment at each matching key.
  * @returns {[object, string[]]} A double of the updated object and an
  * array of the missing keys
  */
-const updateObject = (original, updates, updateCb = undefined) => {
-  const updateFunc = updateCb ?? ((a, b, key) => a[key] = b[key]);
+const updateObject = (original, updates, updateCb = ((a, b, key) => a[key] = b[key])) => {
   const revised = { ...original };
-  const missingKeys = [];
   Object.keys(updates).forEach((key) => {
-    if (key in original) {
-      updateFunc(revised, updates, key);
-    } else {
-      missingKeys.push(key);
-    }
+    if (key in original) updateCb(revised, updates, key);
   });
-  return [revised, missingKeys];
+  return revised;
 }
-
 
 const xhrRequest = (method, path, headers = {}, data = undefined, responseType = '') => {
   return new Promise((resolve, reject) => {
@@ -153,6 +156,7 @@ export {
   selectAll,
   setSubtract,
   stringSubtract,
+  uniqueKeys,
   updateObject,
   xhrRequest,
 };

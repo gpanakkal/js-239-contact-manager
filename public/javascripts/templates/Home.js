@@ -47,9 +47,10 @@ class Home extends TemplateWrapper {
     super([homeBar, contactList], insertionCallback, appState);
   }
 
-  draw(state) {
-    const contacts = this.appState.formatContacts(state.contacts);
-    const formatted = { ...state, contacts };
+  async draw(params = undefined) {
+    const fullState = await this.appState.get();
+    const contacts = this.appState.formatContacts(fullState.contacts);
+    const formatted = { ...fullState, contacts };
     super.draw(formatted);
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
@@ -63,10 +64,11 @@ class Home extends TemplateWrapper {
 
   // customElement - home
   handleSearchInput(e) {
-    const field = select('#contact-name-search');
-    // if (e.target !== field) return;
-    const { value } = field;
+    console.log({ searchEvent: e })
+    e.preventDefault();
+    const { value } = e.currentTarget;
     console.log({ value })
+    console.warn({ HomeSearchState: history.state })
     this.drawMatchingContacts(value ?? '');
   }
 
@@ -76,7 +78,8 @@ class Home extends TemplateWrapper {
     const confirmed = confirm('Are you sure? This operation is irreversible!');
     if (!confirmed) return;
     const { id } = e.target.dataset;
-    this.appState.deleteContact(id).then((result) => this.handleSearchInput());
+    const { value } = select('#contact-name-search');
+    this.appState.deleteContact(id).then((result) => this.drawMatchingContacts(value));
   }
 
   // customElement - home
@@ -90,7 +93,6 @@ class Home extends TemplateWrapper {
       contacts = contacts.filter((contact) => contact.full_name.match(pattern));
     }
     const formatted = this.appState.formatContacts(contacts);
-    console.log('appStateContacts: ', this.appState.getContacts())
     console.log({contacts})
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
     this.insertionCallback(newList);

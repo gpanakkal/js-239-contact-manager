@@ -1,11 +1,11 @@
 import { selectAll } from "../lib/helpers.js";
+import TemplateWrapper from "./TemplateWrapper.js";
 
-/* Router for mimicking page navigation via hash URLs
+/* Router for page navigation via hash URLs
 
 */
 export default class Router {
-  // router - obsolete
-  static routeMatchRegex(routePath) {
+  static #routeMatchRegex(routePath) {
     const patternString = routePath
       .split('/')
       .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
@@ -13,15 +13,13 @@ export default class Router {
     return new RegExp(`^${patternString}/?$`, 'i');
   }
 
-  // router
-  static segmentPath(path) {
+  static #segmentPath(path) {
     return path?.replace(/^#/, '').split('/') ?? null;
   }
 
-  // router
-  static extractParams(navPath, routePath) {
-    const routeSegments = Router.segmentPath(routePath);
-    const navSegments = Router.segmentPath(navPath);
+  static #extractParams(navPath, routePath) {
+    const routeSegments = this.#segmentPath(routePath);
+    const navSegments = this.#segmentPath(navPath);
   
     return navSegments.reduce((acc, value, i) => {
       const paramSegment = routeSegments[i];
@@ -30,139 +28,237 @@ export default class Router {
     }, {});
   }
 
-  // router? only if the router has final determination of what to draw
-  static logNav(...args) {
+  static #logNav(...args) {
     console.log(new Date().toLocaleTimeString(), JSON.stringify(...args));
   }
 
-  // router
-  static validPath(path) {
-    return (typeof path === 'string') 
-      && (path.length === 0 || path.match(/(^#\w+)|(^\/$)/))
-  }
-
-  constructor(app) {
-    this.routes = app.routes;
-    this.container = app.container;
-    this.appState = app.state;
+  constructor({ appRoutes, appContainer, appState }) {
+    this.routes = appRoutes;
+    this.container = appContainer;
+    this.appState = appState;
     this.origin = window.location.origin;
     this.boundClickHandler = this.handleNavClick.bind(this);
-    this.routePatterns = this.getRoutePatterns();
-    history.scrollRestoration = "auto";
+    this.boundAuxClickHandler = this.handleAuxClick.bind(this);
+    this.boundCustomNavHandler = this.handleCustomNav.bind(this);
+    this.routePatterns = this.#getRoutePatterns();
+    // history.scrollRestoration = "auto"; // does this make sense here?
+
     window.addEventListener('popstate', (e) => {
-      e.preventDefault();
+      // console.log({popStateEvent: e})forward, but 
+
+      // return;
       // alert('state popped')
-      const route = this.matchRoute(window.location.hash || '/');
-      console.log({ poppedState: e.state, route, hash: window.location.hash })
-      this.#draw(this.routes[route]);
+      e.stopPropagation();
+      // save history if navigating forwards as well
+      const historyState = history.state;
+      // if (!e.state) { console.error(e);  }
+      console.warn({ popStateEventHistory: historyState });
+      const path = new URL(historyState.href).pathname;
+      const route = this.#matchRoute(path || '/');
+      
+      history.replaceState(historyState, '', path); // seems unnecessary
+      const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+      console.log('popstate routing to', { historyState, route, path, params })
+      this.#draw(this.routes[route], params);
       
     });
+
     this.#navWithoutHistory();
   }
   
-  getRoutePatterns() {
+  #getRoutePatterns() {
     return Object.entries(this.routes)
-      .map(([routePath]) => [Router.routeMatchRegex(routePath), routePath]);
+      .map(([routePath]) => ({ pattern: Router.#routeMatchRegex(routePath), path: routePath }));
   }
 
-  // router
   // given a nav path, finds the corresponding route
-  matchRoute(navPath) {
-    const match = this.routePatterns.find(([pattern, route]) => {
+  #matchRoute(navPath) {
+    const match = this.routePatterns.find(({ pattern, route }) => {
       return pattern.test(navPath);
     });
     console.log({navPath, match })
     if (!match) return null;
-    const route = match[1];
+    const route = match.path;
     return route;
   }
 
-  // router
-  sameOrigin(path) {
+  #sameOrigin(path) {
     return !URL.canParse(path) || new URL(path).origin === this.origin;
   }
 
-  // router
   // could be eliminated?
-  refresh() {
+  #refresh() {
     this.navTo(window.location.hash);
   }
 
-  // Router
-  bindNavigationEvents() {
+  #bindNavigationEvents() {
     const navLinks = selectAll('.navigation');
     console.table({navLinks})
-    selectAll('.navigation').forEach((link) => {
-      link.removeEventListener('click', this.boundClickHandler);
-      link.addEventListener('click', this.boundClickHandler);
-      link.addEventListener('auxclick', (e) => e.preventDefault());
-    });
+    
+    document.removeEventListener('appnavigation', this.boundCustomNavHandler);
+    document.addEventListener('appnavigation', this.boundCustomNavHandler);
+    this.container.removeEventListener('click', this.boundClickHandler);
+    this.container.addEventListener('click', this.boundClickHandler);
+    this.container.removeEventListener('auxclick', this.boundAuxClickHandler);
+    this.container.addEventListener('auxclick', this.boundAuxClickHandler);
+    // selectAll('.navigation').forEach((link) => {
+    //   link.removeEventListener('click', this.boundClickHandler);
+    //   link.addEventListener('click', this.boundClickHandler);
+    //   link.addEventListener('auxclick', (e) => e.preventDefault());
+    // });
   }
 
-  handleNavClick(e) {
-    console.log(e);
-    console.log("clicked navlink")
-    const path = e.currentTarget.getAttribute('href');
-    const route = this.matchRoute(path);
-    if (!route && !this.sameOrigin(path)) {
-      console.warn('external path: ', path)
-      return;
-    };
+  handleAuxClick(e) {
+    const isNavLink = e.target.classList.contains('navigation') 
+      && e.target.tagName === 'A';
+    if (!isNavLink) return; 
     e.preventDefault();
+  }
+
+  handleCustomNav(e) {
+    const path = e.detail;
+    const route = this.#matchRoute(path);
     this.navTo(path, route);
   }
 
-  navTo(path, route) {
-    const params = /:/.test(route) ? Router.extractParams(path, route) : { };
-    Router.logNav({ path, route, params })
-    this.#manageHistory(params, path);
-    // alert(`${path} ; ${window.location.hash}`)
-    this.#draw(this.routes[route ?? '/']);
+  handleNavClick(e) {
+    const isNavLink = e.target.classList.contains('navigation') 
+      && e.target.tagName === 'A';
+    if (!isNavLink) return; 
+    // console.log(e);
+    // console.log("clicked navlink")
+    e.preventDefault();
+    const path = e.target.getAttribute('href');
+    const route = this.#matchRoute(path);
+    this.navTo(path, route);
   }
 
+  // draw the templates corresponding to the path and update the history
+  navTo(path, route) {
+    console.warn('navigating to', path)
+    const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+    Router.#logNav({ path, route, params })
+    this.#setCurrentHistory(history.state);
+    this.#newHistoryEntry(path, params);
+    // alert(`${path} ; ${window.location.hash}`)
+    this.#draw(this.routes[route ?? '/'], params);
+  }
+
+  // 
   async #navWithoutHistory() {
     const path = window.location.hash;
     // alert(`without history: ${path}, ${window.location}`)
-    const route = this.matchRoute(path || '/');
-    const params = /:/.test(route) ? Router.extractParams(path, route) : { };
-    const state = await this.appState.get();
-    console.log({state, params, path})
-    
-    history.replaceState(Object.assign(state.pageState, params), '', new URL(path, this.origin));
-    if (!route) {
-      console.error(`Path '${path}' is invalid; redirecting home`);
-      this.#draw(this.routes['/']);
-    } else {
+    const route = this.#matchRoute(path || '/');
+    const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+    console.log({params, path, route})
+    this.#setCurrentHistory();
+    // this.#updateHistory(params, path, null);
+    // if (!route) {
+    //   console.error(`Path '${path}' is invalid; redirecting home`);
+    //   this.#draw(this.routes['/'], params);
+    // } else {
       const nextPage = this.routes[route];
       console.log({nextPage})
-      this.#draw(this.routes[route]);
-    }
+      this.#draw(this.routes[route], params);
+    // }
   }
 
-  // router - or whichever object makes the final determination to follow a route or not
-  // revise to only add history entries and update the address bar
-  async #manageHistory(params, path) {
-    const pageState = this.appState.getPage();
-    history.replaceState(pageState, '', window.location.pathname);
-    history.pushState(params, '', new URL(path, this.origin));
-    this.appState.setPage(params);
+  // Saves the current page values to history
+  #setCurrentHistory(historyState = undefined) {
+    const currentPageState = historyState ?? {
+      previousPage: null,
+      currentPage: null,
+      href: window.location.toString(),
+      nextPage: null,
+    };
+    // add page values to state.currentPage, overwriting existing values
+    const pageValues = this.#getPageValues();
+    currentPageState.currentPage = Object.assign({}, historyState?.currentPage, pageValues);
+    history.replaceState(currentPageState, '', window.location.toString());
+    console.log(`Set this page's history`, history.state, history.state.href);
   }
 
-  // Router
-  // if revising to use template wrappers, make this call a local draw() method on each passed wrapper?
-  // that appends the template to the end of the app container
-  // instead of inserting templates inside this method
-  // re-render the entire app container
-  async #draw(wrapperArray) {
+  /**
+   * Saves the current page state to its history entry, then passes the same 
+   * state object to be stored on the previousPageState property.
+   * Invoked when navigating without using the forward/back buttons.
+   * @param {string} path The URL's path
+   * @param {{ [key: string]: string }} params key: value pairs of query string parameters
+   */
+  #newHistoryEntry(path, params) {    // set up the state object for the next page with a reference to the current page
+    const newHref = new URL(path, this.origin).toString();
+    const currentPageState = history.state;
+    const nextPageState = {
+      previousPage: currentPageState,
+      currentPage: params,
+      href: newHref,
+      nextPage: null,
+    };
+    // create a reference to the next page
+    currentPageState.nextPage = nextPageState;
+    // save state entries
+    history.replaceState(currentPageState, '', window.location.toString());
+    history.pushState(nextPageState, '', newHref);
+    console.log(`Updated this page's history`, currentPageState, currentPageState.href);
+    console.log(`Navigating to this page with history: `, nextPageState, nextPageState.href);
+  }
+
+  /**
+   * Saves the current page state to its history entry, then passes the same 
+   * state object to be stored on the previousPageState property.
+   * Invoked when navigating without using the forward/back buttons.
+   * @param {{ [key: string]: string }} params key: value pairs of query string parameters
+   * @param {string} path The URL's path
+   */
+  // #updateHistory(params, path, historyState) {
+  //   const pageValues = this.#getPageValues();
+  //   const currentPageState = historyState ?? {
+  //     previousPage: null,
+  //     currentPage: null,
+  //     href: window.location.toString(),
+  //     nextPage: null,
+  //   };
+  //   // add page values to state.currentPage, overwriting existing values
+  //   currentPageState.currentPage = Object.assign({}, historyState?.currentPage, pageValues);
+
+  //   // set up the state object for the next page with a reference to the current page
+  //   const newHref = new URL(path, this.origin).toString();
+  //   const nextPageState = {
+  //     previousPage: currentPageState,
+  //     currentPage: params,
+  //     href: newHref,
+  //     nextPage: null,
+  //   };
+  //   // create a reference to the next page
+  //   currentPageState.nextPage = nextPageState;
+  //   // save state entries
+  //   history.replaceState(currentPageState, '', window.location.toString());
+  //   history.pushState(nextPageState, '', newHref);
+  //   console.log(`Updated this page's history`, history.state, history.state.href);
+  //   console.log(`Navigating to this page with history: `, nextPageState, nextPageState.href);
+  // }
+
+  // collect all page values
+  
+  #getPageValues() {
+    return selectAll('[value]', this.container)
+    .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {});
+  }
+
+  /**
+   * Re-render the entire app container, optionally passing in state to fill element values
+   * @param {TemplateWrapper[]} wrapperArray 
+   * @param {{ [key: string]: string }} params
+   */
+  async #draw(wrapperArray, params = undefined) {
+
     // alert('drawing....')
     this.container.innerHTML = null;
-    const state = await this.appState.get();
     const promises = wrapperArray.map((wrapper) => {
-      // console.log(wrapper);
-      return wrapper.draw(state);
+      return wrapper.draw(params);
     });
     Promise.all(promises).then(() => {
-      this.bindNavigationEvents();
+      this.#bindNavigationEvents();
     });
   }
 }
