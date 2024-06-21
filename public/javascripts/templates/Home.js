@@ -1,6 +1,32 @@
 import TagAutocomplete from "../classes/TagAutocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js"
-import { hashIterable, select } from "../lib/helpers.js";
+import { hashIterable, select, selectParent, htmlToElements } from "../lib/helpers.js";
+
+const matchOptionPartial = /* html */ `
+<script id="matchOptionPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
+  <li class="autocomplete-ui-choice" value="{{match}}">{{match}}</li>
+</script>`;
+
+const contactCardPartial = /* html */`
+<script id="contactCardPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
+<div class="contact-card">
+  <h3 class="cardHeading">{{full_name}}</h3>
+  <dl>
+    <dt>Phone Number:</dt>
+    <dd>{{phone_number}}</dd>
+    <dt>Email:</dt>
+    <dd>{{email}}</dd>
+    {{#if tags}}
+      <dt>Tags:</dt>
+      <dd>{{tags}}</dd>
+    {{/if}}
+  </dl>
+  <div class="contact actions">
+    <div><a class="navigation btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
+    <div><button type="button" class="btn delete" data-id="{{id}}">Delete</a></div>
+  </div>
+</div>
+</script>`;
 
 const homeBar = /* html */ `
 <script id="homeActions" type="text/x-handlebars" nonce=''>
@@ -54,25 +80,30 @@ const contactList = /* html */ `
 
 class Home extends TemplateWrapper {
   constructor(insertionCallback, appState) {
-    super([homeBar, contactList], insertionCallback, appState);
+    super([contactCardPartial, matchOptionPartial, homeBar, contactList], insertionCallback, appState);
   }
 
   async draw() {
     const contacts = await this.appState.getContacts();
     const formatted = this.appState.formatContacts(contacts);
     super.draw({ contacts: formatted });
-    new TagAutocomplete(select('#contact-tag-search'), this.appState.getTagSet.bind(this.appState));
+    const tagSearchField = select('#contact-tag-search');
+    new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
     select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
-    select('#contact-tag-search').addEventListener('autocomplete-cleared', this.handleSearchInput.bind(this));
+    select('#contact-tag-search').addEventListener('autocomplete-reverted', this.handleSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 
-  handleSearchInput() {
+  handleSearchInput(e) {
     const nameSearchValue = select('#contact-name-search').value;
     const tagSearchStr = select('#contact-tag-search').value;
     const tagSearchValue = tagSearchStr.split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
     this.drawMatchingContacts({ full_name: nameSearchValue, tagArray: tagSearchValue });
+  }
+
+  handleTagFieldClear(e) {
+    
   }
 
   handleDeleteClick(e) {
@@ -81,27 +112,24 @@ class Home extends TemplateWrapper {
     const confirmed = confirm('Are you sure? This operation is irreversible!');
     if (!confirmed) return;
     const { id } = e.target.dataset;
-    const { value: nameSearchValue } = select('#contact-name-search');
-    const { value: tagSearchString } = select('#contact-tag-search');
-    const tagSearchValue = tagSearchString.split(',').map((tag) => tag.trim());
-    this.appState.deleteContact(id).then((result) => this
-      .drawMatchingContacts({ full_name: nameSearchValue, tagArray: tagSearchValue}));
+    // const { value: nameSearchValue } = select('#contact-name-search');
+    // const { value: tagSearchString } = select('#contact-tag-search');
+    // const tagSearchValue = tagSearchString.split(',').map((tag) => tag.trim());
+    this.appState.deleteContact(id)
+      .then((result) => {
+        const parent = selectParent('div.contact-card', e.target);
+        parent.remove();
+      }).catch((error) => alert('Contact was not deleted!'));
   }
-
-  // render all contacts
-  // remove?
-  // async drawContacts() {
-  //   this.drawMatchingContacts();
-  // }
 
   /**
    * Draws contacts that match all of the provided search parameters
    * @param {{ full_name?: string, tagArray?: string[] }} The search values to use
    */
   async drawMatchingContacts({ full_name, tagArray }) {
+    let contacts = await this.appState.getContacts();
     const existingList = select('#contact-list');
     if (existingList) existingList.remove();
-    let contacts = await this.appState.getContacts();
     let searchValueArr = [];
     if (full_name) {
       const namePattern = new RegExp(full_name, 'i');
@@ -110,16 +138,16 @@ class Home extends TemplateWrapper {
     }
     if (tagArray) {
       if (!Array.isArray(tagArray)) throw new TypeError(`Must pass tags as an array!`);
-      if (tagArray.length) {
+      if (tagArray.length) { 
         const tagHash = hashIterable(tagArray);
         contacts = contacts.filter((contact) => {
           return Array.isArray(contact.tags) && contact.tags.some((tag) => tag in tagHash);
         });
-        searchValueArr.push(`tags matching "${tagArray}"`);
+        searchValueArr.push(`tag${tagArray.length > 1 ? 's' : ''} "${tagArray}"`);
       }
     }
     const formatted = this.appState.formatContacts(contacts);
-    const searchValue = searchValueArr.join(' or ');
+    const searchValue = searchValueArr.join(' and ');
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
     this.insertionCallback(newList);
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));

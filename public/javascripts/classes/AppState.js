@@ -49,11 +49,11 @@ export default class AppState {
     const result = await contactAPI.editContact(updatedContact);
     if (result) {
       const existing = await this.findContact(updatedContact.id);
-      const original = JSON.parse(JSON.stringify(existing))
-      console.log({ original, updatedContact })
-      const updated = updateObject(existing, updatedContact);
+      // const original = JSON.parse(JSON.stringify(existing))
+      // console.log({ original, updatedContact })
+      const updated = JSON.parse(result);
       Object.assign(existing, updated);
-      console.log({merged: existing})
+      // console.log({merged: existing})
     }
     return result;
   }

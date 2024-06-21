@@ -1,4 +1,4 @@
-import TagAutocomplete from "../classes/Autocomplete.js";
+import TagAutocomplete from "../classes/TagAutocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js";
 import { hashIterable, select, selectAll } from "../lib/helpers.js";
 
@@ -14,21 +14,26 @@ const contactForm = /* html */ `
       <div class="input-box">
         <input type="text" name="full_name" id="full_name" value="{{full_name}}">
       </div>
+      <div></div>
       <label for="email">Email address:</label>
       <div class="input-box">
         <input type="email" name="email" id="email" value="{{email}}">
       </div>
+      <div></div>
       <label for="phone_number">Telephone number:</label>
       <div class="input-box">
         <input type="tel" name="phone_number" id="phone_number" value="{{phone_number}}">
       </div>
+      <div></div>
         <label for="tags">Tags:</label>
         <div class="input-box">
           <input type='text' name='tags' id="tags" value="{{tags}}">
         </div>
+        <div></div>
       <label></label>
       <button id="contact-form-submit" type="submit" class="btn large">Submit</button>
       <a id="contact-form-cancel" href="/" class="btn large navigation">Cancel</a>
+      <div></div>
     </div>
   </form>
 </script>`;
@@ -56,85 +61,74 @@ class ContactForm extends TemplateWrapper {
     select('#full_name').focus();
   }
 
-  // #drawTagAutocomplete() {
-  //   // given a string of comma-separated tags, get the final tag and return all tags that contain the input,
-  //   // sorted by the precedence of the match
-  //   const tagMatcher = (tagInputText, tagValues) => {
-  //     const tags = tagInputText.split(',').map((tag) => tag.trim());
-  //     const lastTag = tags[tags.length - 1].toLowerCase();
-  //     const otherTags = hashIterable(tags.slice(0, -1));
-  //     const matchingTags = tagValues.filter((value) => {
-  //       const tagPresent = (value.toLowerCase() in otherTags);
-  //       const lastTagMatches = value.toLowerCase().includes(lastTag);
-  //       return !tagPresent && lastTagMatches;
-  //     });
-  //     return matchingTags.toSorted((a, b) => a.toLowerCase().indexOf(lastTag) - b.toLowerCase().indexOf(lastTag));
-  //   }
-
-  //   const tagUpdateCb = (input, option) => {
-  //     const previousTagArr = input.value.split(',').map((value) => value.trim()).slice(0, -1);
-  //     const newTagStr = `${option.getAttribute('value')}, `;
-  //     const withNewTag = previousTagArr.concat([newTagStr]).join(', ');
-  //     return withNewTag;
-  //   };
-
-  //   new Autocomplete({
-  //     inputElement: select('#contact-form #tags'),
-  //     optionsLoader: this.appState.getTagSet.bind(this.appState),
-  //     matchCallback: tagMatcher,
-  //     fillCallback: tagUpdateCb,
-  //   });
-  // }
-
-  // customElement - contactForm
-  #drawFormHints(form, conditions) {
-    selectAll('.form-hint').forEach((hint) => hint.remove());
-    [...form.querySelectorAll('.invalid')]
-      .forEach((input) => input.classList.remove('invalid'));
-    const hint = this.findTemplate('contactFormHint');
-    conditions.forEach(([key, { message }]) => {
-      const location = form.querySelector(`input[id="${key}"]`);
-      const label = form.querySelector(`label[for="${key}"`);
-      location.classList.add('invalid');
-      label.classList.add('invalid');
-      location.insertAdjacentHTML('afterend', hint({ message }));
-    });
-  }
-
-  // customElement - contactForm
-  #validateContactForm(formObj) {
-    const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
-    const { full_name, email, phone_number } = formObj;
-    const conditions = {
-      'full_name': {
-        check: full_name.trim().length > 0,
-        message: 'You must provide a name.',
-      },
-      'email': {
-        check: email.length === 0 || !!email.match(/[\w]+@[\w]+\.\w{2,}/),
-        message: 'Email must have a name, domain, and @ sign.',
-      },
-      'phone_number': {
-        check: (phone_number.length === 0 || !!phone_number.match(phoneNumberPattern)),
-        message: 'Please enter a valid US phone number.',
-      },
-    };
-    const failing = Object.entries(conditions).filter(([key, { check }]) => !check);
-    console.log({formObj, failing})
-    return failing;
-  }
-
   #handleFormSubmit(e) {
     // alert(e);
     e.preventDefault();
     const formObj = Object.fromEntries(new FormData(e.currentTarget));
-    const failedConditions = this.#validateContactForm(formObj);
+    const formattedFormObj = this.#formatFormValues(formObj);
+    const failedConditions = this.#validateContactForm(formattedFormObj);
     if (failedConditions.length) {
       // alert(`Failed conditions: ${failedConditions.map(([field, obj]) => obj.message).join(', ')}`)
       this.#drawFormHints(e.currentTarget, failedConditions);
       return false;
     }
-    this.#submitContactForm(formObj);
+    this.#submitContactForm(formattedFormObj);
+  }
+
+  
+  // process tags into csv by taking every instance of '\s*,\s*' and replacing it with ','
+  #formatFormValues(formObj) {
+    const formatted = { ...formObj };
+    formatted.full_name = formObj.full_name.trim();
+    formatted.tags = formObj.tags.trim().split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
+    return formatted;
+  }
+
+  // customElement - contactForm
+  #validateContactForm(formObj) {
+    const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
+    const emailPattern = /[\w]+@[\w]+\.\w{2,}/;
+    const tagPattern = /^\s*[\w-]+\s*$/;
+    const { full_name, email, phone_number, tags } = formObj;
+    const conditions = {
+      'full_name': {
+        check: full_name.length > 0,
+        message: 'You must provide a name.',
+      },
+      'email': {
+        check: email.length === 0 || emailPattern.test(email),
+        message: 'Email must have a name, domain, and @ sign.',
+      },
+      'phone_number': {
+        check: (phone_number.length === 0 || phoneNumberPattern.test(phone_number)),
+        message: 'Please enter a valid US phone number.',
+      },
+      'tags': {
+        check: tags.every((tag) => tagPattern.test(tag)),
+        message: 'Tags must only contain letters, numbers, underscores, and hyphens',
+      }
+    };
+    const failing = Object.entries(conditions).filter(([key, { check }]) => !check);
+    return failing;
+  }
+
+  #drawFormHints(form, conditions) {
+    this.#resetFormHints(form);
+
+    const hint = this.findTemplate('contactFormHint');
+    conditions.forEach(([key, { message }]) => {
+      const location = form.querySelector(`label[for="${key}"]`).nextElementSibling;
+      const label = form.querySelector(`label[for="${key}"`);
+      location.classList.add('invalid');
+      label.classList.add('invalid');
+      location.insertAdjacentHTML('beforeend', hint({ message }));
+    });
+  }
+
+  #resetFormHints(form) {
+    selectAll('.form-hint').forEach((hint) => hint.remove());
+    [...form.querySelectorAll('.invalid')]
+      .forEach((input) => input.classList.remove('invalid'));
   }
 
   async #submitContactForm(formObj) {

@@ -10,26 +10,6 @@
   <script src="/javascripts/lib/handlebars.js" nonce=''></script>
   <script type="module" src="/javascripts/contactManager.js" nonce=''></script>
 
-  <script id="contactCardPartial" data-type="partial" type="text/x-handlebars" nonce=''>
-    <div class="contact-card">
-      <h3 class="cardHeading">{{full_name}}</h3>
-      <dl>
-        <dt>Phone Number:</dt>
-        <dd>{{phone_number}}</dd>
-        <dt>Email:</dt>
-        <dd>{{email}}</dd>
-        {{#if tags}}
-          <dt>Tags:</dt>
-          <dd>{{tags}}</dd>
-        {{/if}}
-      </dl>
-      <div class="contact actions">
-        <div><a class="navigation btn edit" href="#contacts/edit/{{id}}">Edit</a></div>
-        <div><button type="button" class="btn delete" data-id="{{id}}">Delete</a></div>
-      </div>
-    </div>
-  </script>
-
   <title>Contact Manager</title>
 </head>
 <body>

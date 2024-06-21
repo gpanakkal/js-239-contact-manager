@@ -26,11 +26,12 @@ const create = (tag, attributes = {}, properties = {}) => {
   return el;
 }
 
+// wip
 const formatNumber = (phoneNumber) => {
   const num = String(phoneNumber);
   return num.length === 10 
-    ? num.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3')
-    : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 $2-$3-$4');
+    ? num.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3')
+    : num.replace(/(\d*)(\d{3})(\d{3})(\d{4})/, '+$1 ($2) $3-$4');
 };
 
 const formToJson = (form) => JSON.stringify(Object.fromEntries(new FormData(form)));
@@ -39,7 +40,7 @@ const getFormValues = (e) => [...e.currentTarget.elements]
 .reduce((acc, el) => Object.assign(acc, { [el.name]: el.value }), { });
 
 /**
- * Converts raw HTML text into elements
+ * Converts raw HTML text into elements. Don't pass HTML strings containing interpolated values!
  * @param {string} htmlString 
  * @returns {HTMLCollection}
  */
@@ -53,7 +54,9 @@ const htmlToElements = (htmlString) => {
 const hashIterable = (iterable, transform = (x) => x) => [].reduce
   .call(iterable, (acc, val, i) => Object.assign(acc, { [transform(val)]: i }), {});
 
-// unused
+// assumes the element is in the DOM
+const matchesSelector = (selector, element) => selectAll(selector).includes(element);
+
 const queryString = (formObj) => {
   return Object.entries(formObj).reduce((acc, pair) => {
     const [key, value] = pair.map(encodeURIComponent);
@@ -70,6 +73,13 @@ const rollOverAccess = (arr, i) => {
 const select = (selector, parent = document) => parent.querySelector(selector);
 
 const selectAll = (selector, parent = document) => [...parent.querySelectorAll(selector)];
+
+const selectParent = (selector, child) => {
+  if (child.parentNode === document.body) return null;
+  return matchesSelector(selector, child.parentNode) 
+    ? child.parentNode 
+    : selectParent(selector, child.parentNode);
+}
 
 /**
  * Given two array-like objects, immutably remove each element from iterator1 found in iterator2
@@ -154,6 +164,7 @@ export {
   rollOverAccess,
   select,
   selectAll,
+  selectParent,
   setSubtract,
   stringSubtract,
   uniqueKeys,

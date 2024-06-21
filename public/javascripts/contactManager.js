@@ -5,7 +5,7 @@ import ContactForm from "./templates/ContactForm.js";
 import Home from "./templates/Home.js";
 
 class ContactManager {
-  static registerPartials() {
+  static #registerPartials() {
     selectAll('script[type="text/x-handlebars"]')
       .filter((script) => script.dataset.type === 'partial')
       .forEach((partial) => {
@@ -17,7 +17,7 @@ class ContactManager {
   constructor(container) {
     this.container = container;
     this.insertionCallback = (html) => this.container.insertAdjacentHTML('beforeend', html);
-    ContactManager.registerPartials();
+    // ContactManager.#registerPartials();
     this.state = new AppState();
     // define routes and arrays of template wrapper functions
     this.routes = {
