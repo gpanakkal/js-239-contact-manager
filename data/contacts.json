@@ -29,7 +29,7 @@
   },
   {
     "full_name": "Elizabeth\tColeman",
-    "phone_number": "(800)2049555",
+    "phone_number": "8002049555",
     "email": "elizabeth.coleman@example.com",
     "tags": [
       "friend"
@@ -100,13 +100,6 @@
     "id": 22
   },
   {
-    "full_name": "badbasdfa",
-    "phone_number": "",
-    "email": "2@two.com",
-    "tags": [],
-    "id": 27
-  },
-  {
     "full_name": "Joseph Ince",
     "phone_number": "1001111234",
     "email": "joseph.ince@example.com",
@@ -119,21 +112,5 @@
     "email": "warren.ross@example.com",
     "tags": [],
     "id": 32
-  },
-  {
-    "full_name": "outirgwe",
-    "phone_number": "1802024045",
-    "email": "h@c.com",
-    "tags": [
-      "error"
-    ],
-    "id": 33
-  },
-  {
-    "full_name": "dummy contacts",
-    "phone_number": "",
-    "email": "",
-    "tags": [],
-    "id": 34
   }
 ]

@@ -11,10 +11,6 @@ const wrapperTemplate = /* html */ `
 </div>
 `;
 
-const matchListTemplate = (matches) => matches.length && matches
-  .map((match, i) => /* html */ `<li class="autocomplete-ui-choice" value="${match}">${match}</li>`)
-  .join('\n');
-
 export default class Autocomplete {
   constructor(inputElement, optionsLoader) {
     this.input = inputElement;
@@ -51,11 +47,11 @@ export default class Autocomplete {
     this.inputPlaceholder = this.input.getAttribute('placeholder') ?? '';
     this.wrapper = htmlToElements(wrapperTemplate)[0];
     this.input.insertAdjacentElement('afterend', this.wrapper);
-    // this.wrapper.insertAdjacentElement('afterbegin', this.input);
     select('.autocomplete-input', this.wrapper).appendChild(this.input);
     this.listUI = select('ul.autocomplete-ui', this.wrapper);
     this.overlay = select('div.autocomplete-overlay', this.wrapper);
-    // copy the input's text styles and background color, then remove the input's background
+
+    // copy the input's text dimensions, then remove the overlay's background
     this.overlay.style.width = `${this.input.clientWidth}px`;
     this.listUI.style.top = `${this.input.clientHeight}px`;
     this.overlayDisplayStyle = this.overlay.style.display;
@@ -79,14 +75,7 @@ export default class Autocomplete {
 
   // redraw matches as needed
   handleTextInput(e) {
-    // this.clearUI();
-    const value = 
-    // if (value.length === 0) return;
-
     this.drawOptions();
-    // const optionValues = [...await this.optionsLoader()];
-    // const matches = this.matchingOptions(optionValues);
-    // this.drawUI(matches);
   }
 
   async drawOptions() {
@@ -142,7 +131,7 @@ export default class Autocomplete {
     e.preventDefault();
     const match = e.target;
     this.setInputValue(this.newFillValue(match));
-    this.drawOptions();
+    this.resetUI();
     this.input.focus({ focusVisible: true });
   }
 
@@ -219,7 +208,7 @@ export default class Autocomplete {
 
   clearUI() {
     this.resetUI();
-    const uiClearedEvent = new CustomEvent('autocomplete-cleared');
+    const uiClearedEvent = new CustomEvent('autocomplete-reverted');
     this.input.dispatchEvent(uiClearedEvent);
   }
 

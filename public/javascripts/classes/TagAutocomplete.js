@@ -1,4 +1,4 @@
-import { hashIterable } from "../lib/helpers.js";
+import { create, hashIterable } from "../lib/helpers.js";
 import Autocomplete from "./Autocomplete.js";
 
 export default class TagAutocomplete extends Autocomplete {
@@ -10,7 +10,11 @@ export default class TagAutocomplete extends Autocomplete {
     const inputTags = this.getInputValue();
     if (!inputTags.length) return null;
     const lastTag = inputTags[inputTags.length - 1];
-    return tagValues.filter((option) => option.toLowerCase().startsWith(lastTag.toLowerCase()));
+    const previousTags = hashIterable(inputTags.slice(0, -1));
+    const lower = lastTag.toLowerCase();
+    return tagValues.filter((option) => 
+      !(option in previousTags)
+      && option.toLowerCase().startsWith(lower));
   }
 
   tagStringToArray(tagString) {
@@ -18,7 +22,7 @@ export default class TagAutocomplete extends Autocomplete {
   }
 
   tagArrayToString(tagArray) {
-    return tagArray.map((tag) => tag.trim()).filter((tag) => tag.length).join(', ');
+    return tagArray.map((tag) => tag.trim()).join(', ');
   }
 
   // split it into an array
@@ -46,7 +50,8 @@ export default class TagAutocomplete extends Autocomplete {
   // remove the last tag and add the option's value
   autoFillInputValue(option) {
     this.backupValue = this.getInputValue();
-    this.setInputValue(this.newFillValue(option));
+    const newFill = this.newFillValue(option);
+    this.setInputValue(newFill.concat(['']));
     const inputSet = new InputEvent('input', { bubbles: true });
     this.input.dispatchEvent(inputSet);
   }
@@ -68,11 +73,13 @@ export default class TagAutocomplete extends Autocomplete {
     }
 
     if (e.inputType === 'insertText') {
-      if (e.data === ',' && prevCharIsComma) {
+      if ((e.data === ',') && prevCharIsComma) {
         e.preventDefault();
       } else if (inputIsSpace) {
         e.preventDefault();
-        if (!prevCharIsComma) this.appendToInput(', ');
+      } else if ((e.data === ',') && !prevCharIsComma) {
+        e.preventDefault();
+        this.appendToInput('');
       }
     } else if (e.inputType === 'deleteContentBackward') {
       if (prevCharIsComma) {
@@ -85,5 +92,14 @@ export default class TagAutocomplete extends Autocomplete {
       this.setInputValue(updated);
     } 
     // add else condition to strip trailing ',\s*$' from the tag string on form submit
+  }
+
+  drawOverlay(match) {
+    const suggestedTagArr = this.newFillValue(match);
+    const textSpan = create('span', { class: 'autocomplete-overlay-text' });
+    this.overlay.innerHTML = null;
+    this.overlay.append(textSpan);
+    this.overlay.style.display = this.overlayDisplayStyle;
+    textSpan.textContent = this.tagArrayToString(suggestedTagArr);
   }
 }
