@@ -90,21 +90,16 @@ export default class TagAutocomplete extends Autocomplete {
       const sliceIndex = lastTagEmpty ? -2 : -1;
       const withoutLast = currentTagArray.slice(0, sliceIndex).concat(['']);
       this.setInputValue(withoutLast);
+      if (withoutLast.length <= 1) { this.clearUI(); }
       this.dispatchUpdateEvent();
     } else if (e.inputType === 'deleteWordBackward') {
       e.preventDefault();
       this.setInputValue(['']);
-      // const inputSet = new InputEvent('input', { bubbles: true });
-      // this.input.dispatchEvent(inputSet);
-      this.dispatchUpdateEvent();
+      this.clearUI();
+      // this.drawOptions();
+      // this.dispatchUpdateEvent();
     } 
-    // add else condition to strip trailing ',\s*$' from the tag string on form submit
   }
-
-  // dispatchDeleteEvent() {
-  //   const inputDeletedEvent = new CustomEvent('autocomplete-reverted');
-  //   this.input.dispatchEvent(inputDeletedEvent);
-  // }
 
   drawOverlay(match = null) {
     const suggestedTagArr = this.newFillValue(match ?? this.highlightedOption);

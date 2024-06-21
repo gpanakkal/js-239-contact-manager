@@ -1,4 +1,5 @@
 import { selectAll } from "../lib/helpers.js";
+import HistoryManager from "./HistoryManager.js";
 import TemplateWrapper from "./TemplateWrapper.js";
 
 /* Router for page navigation via hash URLs
@@ -30,44 +31,32 @@ export default class Router {
     }, {});
   }
 
-  static #logNav(...args) {
-    console.log(new Date().toLocaleTimeString(), JSON.stringify(...args));
-  }
-
   constructor({ appRoutes, appContainer, appState }) {
     this.routes = appRoutes;
     this.container = appContainer;
     this.appState = appState;
-    this.origin = window.location.origin;
     this.boundClickHandler = this.#handleNavClick.bind(this);
     this.boundAuxClickHandler = this.#handleAuxClick.bind(this);
     this.boundCustomNavHandler = this.#handleCustomNav.bind(this);
     this.routePatterns = this.#getRoutePatterns();
+    this.historyManager = new HistoryManager();
+    this.bindEvents();
+    this.#navWithoutHistory();
+  }
 
+  bindEvents() {
     window.addEventListener('popstate', (e) => {
-      // add a check to see if path was directly navigated to
-
       e.stopPropagation();
-      // save history if navigating forwards as well
-      const historyState = history.state;
-      // if there is no history state, it was navigated to from a new tab, window 
-      // if (!historyState) {
-      //   const path = 
-      //   return;
-      // }
-      const urlRaw = historyState === null ? window.location.href : historyState.href;
+      const historyUrl = this.historyManager.getUrl();
+      // const urlRaw = historyState === null ? window.location.href : historyState.href;
+      // const urlRaw = history.state ? history.state.href : window.location.href;
+      const urlRaw = historyUrl ?? window.location.href;
       const url = new URL(urlRaw);
       const path = Router.#getPath(url);
       const route = this.#matchRoute(path);
-      
-      // history.replaceState(historyState, '', path); // seems unnecessary
       const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-      console.log('popstate routing to', { historyState, route, path, params })
       this.#draw(this.routes[route], params);
-      
     });
-
-    this.#navWithoutHistory();
   }
   
   #getRoutePatterns() {
@@ -84,15 +73,6 @@ export default class Router {
     if (!match) return null;
     const route = match.path;
     return route;
-  }
-
-  #sameOrigin(path) {
-    return !URL.canParse(path) || new URL(path).origin === this.origin;
-  }
-
-  // could be eliminated?
-  #refresh() {
-    this.#navTo(window.location.hash);
   }
 
   #bindNavigationEvents() {
@@ -135,109 +115,28 @@ export default class Router {
   #navTo(path, route) {
     console.warn('navigating to', path)
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-    Router.#logNav({ path, route, params })
-    this.#setCurrentHistory(history.state);
-    this.#newHistoryEntry(path, params);
-    // alert(`${path} ; ${window.location.hash}`)
+    // this.#setCurrentHistory(history.state);
+    const pageValues = this.#getPageValues();
+    this.historyManager.setEntry(pageValues, { update: true });
+    // this.#newHistoryEntry(path, params);
+    this.historyManager.createEntry(path, params);
     this.#draw(this.routes[route ?? '/'], params);
   }
 
   // 
   async #navWithoutHistory() {
     const path = window.location.hash;
-    // alert(`without history: ${path}, ${window.location}`)
     const route = this.#matchRoute(path || '/');
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
     console.log({params, path, route})
-    this.#setCurrentHistory();
-    // this.#updateHistory(params, path, null);
-    // if (!route) {
-    //   console.error(`Path '${path}' is invalid; redirecting home`);
-    //   this.#draw(this.routes['/'], params);
-    // } else {
-      const nextPage = this.routes[route];
-      console.log({nextPage})
-      this.#draw(this.routes[route], params);
-    // }
-  }
-
-  // Saves the current page values to history
-  #setCurrentHistory(historyState = undefined) {
-    const currentPageState = historyState ?? {
-      previousPage: null,
-      currentPage: null,
-      href: window.location.toString(),
-      nextPage: null,
-    };
-    // add page values to state.currentPage, overwriting existing values
     const pageValues = this.#getPageValues();
-    currentPageState.currentPage = Object.assign({}, historyState?.currentPage, pageValues);
-    history.replaceState(currentPageState, '', window.location.toString());
-    console.log(`Set this page's history`, history.state, history.state.href);
+    // this.#setCurrentHistory();
+    this.historyManager.setEntry(pageValues, { update: false });
+    const nextPage = this.routes[route];
+    console.log({nextPage})
+    this.#draw(this.routes[route], params);
   }
 
-  /**
-   * Saves the current page state to its history entry, then passes the same 
-   * state object to be stored on the previousPageState property.
-   * Invoked when navigating without using the forward/back buttons.
-   * @param {string} path The URL's path
-   * @param {{ [key: string]: string }} params key: value pairs of query string parameters
-   */
-  #newHistoryEntry(path, params) {    // set up the state object for the next page with a reference to the current page
-    const newHref = new URL(path, this.origin).toString();
-    const currentPageState = history.state;
-    const nextPageState = {
-      previousPage: currentPageState,
-      currentPage: params,
-      href: newHref,
-      nextPage: null,
-    };
-    // create a reference to the next page
-    currentPageState.nextPage = nextPageState;
-    // save state entries
-    history.replaceState(currentPageState, '', window.location.toString());
-    history.pushState(nextPageState, '', newHref);
-    console.log(`Updated this page's history`, currentPageState, currentPageState.href);
-    console.log(`Navigating to this page with history: `, nextPageState, nextPageState.href);
-  }
-
-  /**
-   * Saves the current page state to its history entry, then passes the same 
-   * state object to be stored on the previousPageState property.
-   * Invoked when navigating without using the forward/back buttons.
-   * @param {{ [key: string]: string }} params key: value pairs of query string parameters
-   * @param {string} path The URL's path
-   */
-  // #updateHistory(params, path, historyState) {
-  //   const pageValues = this.#getPageValues();
-  //   const currentPageState = historyState ?? {
-  //     previousPage: null,
-  //     currentPage: null,
-  //     href: window.location.toString(),
-  //     nextPage: null,
-  //   };
-  //   // add page values to state.currentPage, overwriting existing values
-  //   currentPageState.currentPage = Object.assign({}, historyState?.currentPage, pageValues);
-
-  //   // set up the state object for the next page with a reference to the current page
-  //   const newHref = new URL(path, this.origin).toString();
-  //   const nextPageState = {
-  //     previousPage: currentPageState,
-  //     currentPage: params,
-  //     href: newHref,
-  //     nextPage: null,
-  //   };
-  //   // create a reference to the next page
-  //   currentPageState.nextPage = nextPageState;
-  //   // save state entries
-  //   history.replaceState(currentPageState, '', window.location.toString());
-  //   history.pushState(nextPageState, '', newHref);
-  //   console.log(`Updated this page's history`, history.state, history.state.href);
-  //   console.log(`Navigating to this page with history: `, nextPageState, nextPageState.href);
-  // }
-
-  // collect all page values
-  
   #getPageValues() {
     return selectAll('[value]', this.container)
     .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {});
@@ -251,10 +150,8 @@ export default class Router {
   async #draw(wrapperArray, params = undefined) {
     this.container.innerHTML = null;
     this.#bindNavigationEvents();
-    const promises = wrapperArray.forEach((wrapper) => {
+    wrapperArray.forEach((wrapper) => {
       wrapper.draw(params);
     });
-    // Promise.all(promises).then(() => {
-    // });
   }
 }

@@ -34,7 +34,6 @@ const contactAPI = {
   
   async fetchContacts() {
     const contactData = await xhrRequest('GET', '/api/contacts', {}, undefined, 'json');
-    console.table(contactData);
     return contactData;
   },
   

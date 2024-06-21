@@ -27,7 +27,7 @@ const contactForm = /* html */ `
       <div></div>
         <label for="tags">Tags:</label>
         <div class="input-box">
-          <input type='text' name='tags' id="tags" value="{{tags}}">
+          <input type='text' name='tags' id="tags" value="{{#each tags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}">
         </div>
         <div></div>
       <label></label>

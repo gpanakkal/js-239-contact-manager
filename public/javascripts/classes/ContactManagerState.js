@@ -1,10 +1,8 @@
 import contactAPI from "../lib/contactAPI.js";
-import { formatNumber, updateObject } from "../lib/helpers.js";
+import { formatNumber } from "../lib/helpers.js";
 
-/*
-  Caches contacts and interfaces with the API.
-*/
-export default class AppState {
+/* Caches contacts and interfaces with the API. */
+export default class ContactManagerState {
   #contacts = [];
 
   async getContacts() {
@@ -31,7 +29,6 @@ export default class AppState {
     return contacts.map((contact) => {
       const formatted = {
         phone_number: formatNumber(contact.phone_number),
-        // tags: contact.tags?.split(',').map((tag) => tag.trim()).join(', '),
       };
       return { ...contact, ...formatted };
     });
@@ -49,11 +46,8 @@ export default class AppState {
     const result = await contactAPI.editContact(updatedContact);
     if (result) {
       const existing = await this.findContact(updatedContact.id);
-      // const original = JSON.parse(JSON.stringify(existing))
-      // console.log({ original, updatedContact })
       const updated = JSON.parse(result);
       Object.assign(existing, updated);
-      // console.log({merged: existing})
     }
     return result;
   }

@@ -144,8 +144,10 @@ class Home extends TemplateWrapper {
       if (!Array.isArray(tagArray)) throw new TypeError(`Must pass tags as an array!`);
       if (tagArray.length) { 
         const tagHash = hashIterable(tagArray);
+        const lastTag = tagArray[tagArray.length - 1];
         contacts = contacts.filter((contact) => {
-          return Array.isArray(contact.tags) && contact.tags.some((tag) => tag in tagHash);
+          if (!Array.isArray(contact.tags)) return false;
+          return contact.tags.some((tag) => tag in tagHash || tag.startsWith(lastTag));
         });
         searchValueArr.push(`tag${tagArray.length > 1 ? 's' : ''} "${tagArray}"`);
       }

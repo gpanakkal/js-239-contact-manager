@@ -1,4 +1,4 @@
-import AppState from "./classes/AppState.js";
+import ContactManagerState from "./classes/ContactManagerState.js";
 import Router from "./classes/Router.js";
 import { select, selectAll, xhrRequest } from "./lib/helpers.js";
 import ContactForm from "./templates/ContactForm.js";
@@ -20,7 +20,7 @@ class ContactManager {
     this.container = container;
     this.insertionCallback = (html) => this.container.insertAdjacentHTML('beforeend', html);
     // ContactManager.#registerPartials();
-    this.state = new AppState();
+    this.state = new ContactManagerState();
     // define routes and corresponding templates used to construct the page
     this.routes = {
       '/': this.pages(Home),
