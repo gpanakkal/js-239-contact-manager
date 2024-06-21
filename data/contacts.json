@@ -14,7 +14,7 @@
     "phone_number": "+1 (971) 941-1880",
     "email": "adrian.clark@example.com",
     "tags": [
-      "hyphenated-tag"
+      "hyphenated-tags"
     ],
     "id": 4
   },
@@ -23,12 +23,12 @@
     "phone_number": "",
     "email": "john@doe.com",
     "tags": [
-      "anon"
+      "anonymous"
     ],
     "id": 5
   },
   {
-    "full_name": "Elizabeth\tColeman",
+    "full_name": "Elizabeth Coleman",
     "phone_number": "8002049555",
     "email": "elizabeth.coleman@example.com",
     "tags": [
@@ -41,7 +41,8 @@
     "phone_number": "+1 (494) 782-4885",
     "email": "matt.taylor@example.com",
     "tags": [
-      "colleague"
+      "colleague",
+      "friend"
     ],
     "id": 13
   },
@@ -49,18 +50,14 @@
     "full_name": "Gabrielle\tEllison",
     "phone_number": "0215101489",
     "email": "gabrielle.ellison@example.com",
-    "tags": [
-      "example"
-    ],
+    "tags": [],
     "id": 14
   },
   {
     "full_name": "Andrew Miller",
-    "phone_number": "000-000-1202",
+    "phone_number": "",
     "email": "andrew.miller@example.com",
-    "tags": [
-      "new"
-    ],
+    "tags": [],
     "id": 15
   },
   {

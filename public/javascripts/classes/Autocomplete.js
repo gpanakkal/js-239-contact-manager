@@ -25,11 +25,6 @@ export default class Autocomplete {
     this.bindEvents();
   }
 
-  matchingOptions(optionValues) {
-    const inputText = this.getInputValue();
-    return optionValues.filter((option) => option.toLowerCase().startsWith(inputText.toLowerCase()));
-  }
-
   getInputValue() {
     return this.input.value ?? '';
   }
@@ -76,6 +71,17 @@ export default class Autocomplete {
   // redraw matches as needed
   handleTextInput(e) {
     this.drawOptions();
+    this.dispatchUpdateEvent();
+  }
+
+  matchingOptions(optionValues) {
+    const inputText = this.getInputValue();
+    return optionValues.filter((option) => option.toLowerCase().startsWith(inputText.toLowerCase()));
+  }
+
+  findListOption(value) {
+    const allOptions = selectAll('.autocomplete-ui-choice', this.wrapper)
+    return allOptions.find((option) => option.textContent = value);
   }
 
   async drawOptions() {
@@ -89,42 +95,59 @@ export default class Autocomplete {
       'ArrowDown': (e) => {
         e.preventDefault();
         const next = this.highlightedOption.nextElementSibling ?? this.listUI.firstElementChild;
-        this.highlightMatch(next);
+        this.setBestMatch(next);
+        this.highlightMatch();
       },
       'ArrowUp': (e) => {
         e.preventDefault();
         const prev = this.highlightedOption.previousElementSibling ?? this.listUI.lastElementChild;
-        this.highlightMatch(prev);
+        this.setBestMatch(prev);
+        this.highlightMatch();
       },
       'Tab': (e) => {
-        if (!this.highlightedOption) return;
         e.preventDefault();
-        this.autoFillInputValue(this.highlightedOption);
+        this.autofillInputValue(this.highlightedOption);
         this.clearUI();
         // this.highlightMatch(null);
       },
-      'Escape': (e) => this.restoreBackupValue(),
-      'Enter': (e) => this.clearUI(), // this permits form submit since it doesn't prevent default
+      'Escape': (e) => {
+        this.restoreBackupValue();
+      },
+      'Enter': (e) => {
+        this.clearUI();
+      }, // this permits form submit since it doesn't prevent default
     }
     
     if (e.key in keyActions) {
+      if (!this.UIVisible()) return;
       keyActions[e.key](e);
     }
   }
 
-  autoFillInputValue() {
+  autofillInputValue() {
     this.backupValue = this.getInputValue();
     this.setInputValue(this.newFillValue(this.highlightedOption));
     const inputSet = new InputEvent('input', { bubbles: true });
     this.input.dispatchEvent(inputSet);
   }
 
+  dispatchUpdateEvent() {
+    const updateEvent = new CustomEvent('autocomplete-updated');
+    this.input.dispatchEvent(updateEvent);
+  }
+
   restoreBackupValue() {
+    if (this.backupValue === null) return null;
     this.setInputValue(this.backupValue);
-    const inputModifiedEvent = new CustomEvent('autocomplete-reverted');
-    this.input.dispatchEvent(inputModifiedEvent);
+    this.dispatchUpdateEvent();
+    // const inputModifiedEvent = new CustomEvent('autocomplete-reverted');
+    // this.input.dispatchEvent(inputModifiedEvent);
     this.resetUI();
   }
+
+  // dispatchRestoreEvent() {
+
+  // }
 
   handleElementSelect(e) {
     if (!e.target.classList.contains('autocomplete-ui-choice')) return;
@@ -148,26 +171,24 @@ export default class Autocomplete {
   handleMouseover(e) {
     const match = e.target;
     if (e.target.classList.contains('autocomplete-ui-choice')) {
-      this.highlightMatch(match);
+      this.setBestMatch(match);
+      this.highlightMatch();
+      this.drawOverlay();
     }
   }
 
-  findListOption(value) {
-    const allOptions = selectAll('.autocomplete-ui-choice', this.wrapper)
-    return allOptions.find((option) => option.textContent = value);
+  setBestMatch(match) {
+    this.highlightedOption = match;
   }
 
-  highlightMatch(match = null) {
+  // dual purpose: sets the match and highlights the current match. split it up
+  highlightMatch() {
     const optionList = selectAll('.autocomplete-ui-choice', this.listUI);
     optionList.forEach((li) => li.classList.remove('highlighted'));
-    if (match) {
-    match.classList.add('highlighted');
-    this.highlightedOption = match;
-    this.drawOverlay(match);
-    }
+    this.highlightedOption.classList.add('highlighted');
   }
 
-  matchListTemplate(options) {
+  matchListItems(options) {
     return options.map((option) => {
       return create('li', { class: "autocomplete-ui-choice" }, { textContent: option });
     });
@@ -175,25 +196,36 @@ export default class Autocomplete {
 
   async #drawUI(optionValues) {
     this.resetUI();
-    const options = optionValues?.filter((option) => option !== this.getInputValue()) ?? [];
+    // const options = optionValues?.filter((option) => option !== this.getInputValue()) ?? [];
+    const options = optionValues ?? [];
     this.listUI.setAttribute('visible', 'true');
 
     if (options.length) {
-      const listItems = this.matchListTemplate(options);
-      // const listItems = htmlToElements(listStr);
-      listItems.forEach((li) => this.listUI.appendChild(li));
-      // this.listUI.appendElementChild(...listItems);
-      this.highlightMatch(listItems[0]);
+      this.#drawMatchingList(options);
+      // const listItems = this.matchListItems(options);
+      // listItems.forEach((li) => this.listUI.appendChild(li));
+      // this.setBestMatch(listItems[0]);
+      // this.highlightMatch();
     } else {
-      // const noItemsStr = 
-      const noItemsLi = this.matchListTemplate(['(No matching options)'])[0];
+      const noItemsLi = this.matchListItems(['(No matching options)'])[0];
       noItemsLi.className = 'autocomplete-no-options';
       this.listUI.appendChild(noItemsLi);
     }
   }
 
-  drawOverlay(match) {
-    const newText = this.newFillValue(match);
+  UIVisible() {
+    return this.listUI.getAttribute('visible') === 'true';
+  }
+
+  #drawMatchingList(options) {
+    const listItems = this.matchListItems(options);
+    listItems.forEach((li) => this.listUI.appendChild(li));
+    this.setBestMatch(listItems[0]);
+    this.highlightMatch();
+  }
+
+  drawOverlay(match = null) {
+    const newText = this.newFillValue(match ?? this.highlightedOption);
     const textSpan = create('span', { class: 'autocomplete-overlay-text' });
     this.overlay.innerHTML = null;
     this.overlay.append(textSpan);
@@ -208,8 +240,8 @@ export default class Autocomplete {
 
   clearUI() {
     this.resetUI();
-    const uiClearedEvent = new CustomEvent('autocomplete-reverted');
-    this.input.dispatchEvent(uiClearedEvent);
+    // const uiClearedEvent = new CustomEvent('autocomplete-reverted');
+    this.input.dispatchUpdateEvent();
   }
 
   resetUI() {

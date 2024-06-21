@@ -43,15 +43,21 @@ export default class Router {
     this.boundAuxClickHandler = this.#handleAuxClick.bind(this);
     this.boundCustomNavHandler = this.#handleCustomNav.bind(this);
     this.routePatterns = this.#getRoutePatterns();
-    // history.scrollRestoration = "auto"; // does this make sense here?
 
     window.addEventListener('popstate', (e) => {
-      // alert('state popped')
+      // add a check to see if path was directly navigated to
+
       e.stopPropagation();
       // save history if navigating forwards as well
       const historyState = history.state;
-      console.warn({ popStateEventHistory: historyState });
-      const path = Router.#getPath(new URL(historyState.href));
+      // if there is no history state, it was navigated to from a new tab, window 
+      // if (!historyState) {
+      //   const path = 
+      //   return;
+      // }
+      const urlRaw = historyState === null ? window.location.href : historyState.href;
+      const url = new URL(urlRaw);
+      const path = Router.#getPath(url);
       const route = this.#matchRoute(path);
       
       // history.replaceState(historyState, '', path); // seems unnecessary
@@ -90,8 +96,7 @@ export default class Router {
   }
 
   #bindNavigationEvents() {
-    const navLinks = selectAll('.navigation');
-    console.table({navLinks})
+    // const navLinks = selectAll('.navigation');
     
     document.removeEventListener('appnavigation', this.boundCustomNavHandler);
     document.addEventListener('appnavigation', this.boundCustomNavHandler);
@@ -99,11 +104,6 @@ export default class Router {
     this.container.addEventListener('click', this.boundClickHandler);
     this.container.removeEventListener('auxclick', this.boundAuxClickHandler);
     this.container.addEventListener('auxclick', this.boundAuxClickHandler);
-    // selectAll('.navigation').forEach((link) => {
-    //   link.removeEventListener('click', this.boundClickHandler);
-    //   link.addEventListener('click', this.boundClickHandler);
-    //   link.addEventListener('auxclick', (e) => e.preventDefault());
-    // });
   }
 
   #handleAuxClick(e) {
@@ -249,14 +249,12 @@ export default class Router {
    * @param {{ [key: string]: string }} params
    */
   async #draw(wrapperArray, params = undefined) {
-
-    // alert('drawing....')
     this.container.innerHTML = null;
-    const promises = wrapperArray.map((wrapper) => {
-      return wrapper.draw(params);
+    this.#bindNavigationEvents();
+    const promises = wrapperArray.forEach((wrapper) => {
+      wrapper.draw(params);
     });
-    Promise.all(promises).then(() => {
-      this.#bindNavigationEvents();
-    });
+    // Promise.all(promises).then(() => {
+    // });
   }
 }

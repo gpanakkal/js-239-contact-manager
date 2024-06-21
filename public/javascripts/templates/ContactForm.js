@@ -1,6 +1,6 @@
 import TagAutocomplete from "../classes/TagAutocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js";
-import { hashIterable, select, selectAll } from "../lib/helpers.js";
+import { select, selectAll } from "../lib/helpers.js";
 
 const contactForm = /* html */ `
 <script id="contactForm" type="text/x-handlebars" nonce=''>
@@ -43,7 +43,7 @@ const contactFormHint = /* html */ `
   <small class="form-hint">{{message}}</small>
 </script>`;
 
-class ContactForm extends TemplateWrapper {
+export default class ContactForm extends TemplateWrapper {
   constructor(insertionCallback, appState) {
     super([contactForm, contactFormHint], insertionCallback, appState);
   }
@@ -52,11 +52,9 @@ class ContactForm extends TemplateWrapper {
     select('#contact-form').addEventListener('submit', this.#handleFormSubmit.bind(this));
   }
 
-  async draw(params = undefined) {
-    const contact = params?.id ? await this.appState.findContact(params.id) : null;
-    super.draw(contact);
+  async draw(contact, useHistory) {
+    super.draw(contact, useHistory);
     this.bindContactFormEvents();
-    // this.#drawTagAutocomplete();
     new TagAutocomplete(select('#contact-form #tags'), this.appState.getTagSet.bind(this.appState));
     select('#full_name').focus();
   }
@@ -67,6 +65,7 @@ class ContactForm extends TemplateWrapper {
     const formObj = Object.fromEntries(new FormData(e.currentTarget));
     const formattedFormObj = this.#formatFormValues(formObj);
     const failedConditions = this.#validateContactForm(formattedFormObj);
+    this.#resetFormHints(e.currentTarget);
     if (failedConditions.length) {
       // alert(`Failed conditions: ${failedConditions.map(([field, obj]) => obj.message).join(', ')}`)
       this.#drawFormHints(e.currentTarget, failedConditions);
@@ -86,37 +85,47 @@ class ContactForm extends TemplateWrapper {
 
   // customElement - contactForm
   #validateContactForm(formObj) {
+    const namePattern = /^(\s*([\w-]+)(\s+[\w-]+)*\s*)?$/;
     const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
     const emailPattern = /[\w]+@[\w]+\.\w{2,}/;
     const tagPattern = /^\s*[\w-]+\s*$/;
     const { full_name, email, phone_number, tags } = formObj;
-    const conditions = {
-      'full_name': {
+    const conditions = [
+      {
+        key: 'full_name',
         check: full_name.length > 0,
         message: 'You must provide a name.',
       },
-      'email': {
+      {
+        key: 'full_name',
+        check: namePattern.test(full_name),
+        message: 'Name must only contain alphanumeric characters, hyphens and spaces.',
+      },
+      {
+        key: 'email',
         check: email.length === 0 || emailPattern.test(email),
         message: 'Email must have a name, domain, and @ sign.',
       },
-      'phone_number': {
+      {
+        key: 'phone_number',
         check: (phone_number.length === 0 || phoneNumberPattern.test(phone_number)),
         message: 'Please enter a valid US phone number.',
       },
-      'tags': {
+      {
+        key: 'tags',
         check: tags.every((tag) => tagPattern.test(tag)),
         message: 'Tags must only contain letters, numbers, underscores, and hyphens',
-      }
-    };
-    const failing = Object.entries(conditions).filter(([key, { check }]) => !check);
+      },
+    ];
+    const failing = conditions.filter(({ check }) => !check);
     return failing;
   }
 
   #drawFormHints(form, conditions) {
-    this.#resetFormHints(form);
+    // this.#resetFormHints(form);
 
     const hint = this.findTemplate('contactFormHint');
-    conditions.forEach(([key, { message }]) => {
+    conditions.forEach(({ key, message }) => {
       const location = form.querySelector(`label[for="${key}"]`).nextElementSibling;
       const label = form.querySelector(`label[for="${key}"`);
       location.classList.add('invalid');
@@ -135,10 +144,10 @@ class ContactForm extends TemplateWrapper {
     const result = await (formObj.id 
       ? this.appState.editContact(formObj) 
       : this.appState.createContact(formObj));
-    await result;
-    const navHome = new CustomEvent('appnavigation', { detail: '/' })
+    // await result;
+    const navHome = new CustomEvent('appnavigation', { detail: '/' });
     document.dispatchEvent(navHome);
   }
 }
 
-export default ((insertionCallback, appState) => new ContactForm(insertionCallback, appState));
+// export default ((insertionCallback, appState) => new ContactForm(insertionCallback, appState));

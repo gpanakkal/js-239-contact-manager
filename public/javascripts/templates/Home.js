@@ -12,13 +12,17 @@ const contactCardPartial = /* html */`
 <div class="contact-card">
   <h3 class="cardHeading">{{full_name}}</h3>
   <dl>
+    {{#if phone_number}}
     <dt>Phone Number:</dt>
     <dd>{{phone_number}}</dd>
+    {{/if}}
+    {{#if email}}
     <dt>Email:</dt>
     <dd>{{email}}</dd>
+    {{/if}}
     {{#if tags}}
       <dt>Tags:</dt>
-      <dd>{{tags}}</dd>
+      <dd>{{#each tags}}#{{this}}{{#unless @last}}, {{/unless}}{{/each}}</dd>
     {{/if}}
   </dl>
   <div class="contact actions">
@@ -90,8 +94,8 @@ class Home extends TemplateWrapper {
     const tagSearchField = select('#contact-tag-search');
     new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
-    select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
-    select('#contact-tag-search').addEventListener('autocomplete-reverted', this.handleSearchInput.bind(this));
+    // select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
+    select('#contact-tag-search').addEventListener('autocomplete-updated', this.handleSearchInput.bind(this));
     select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 

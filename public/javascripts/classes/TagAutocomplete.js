@@ -4,6 +4,7 @@ import Autocomplete from "./Autocomplete.js";
 export default class TagAutocomplete extends Autocomplete {
   constructor(input, optionsLoader) {
     super(input, optionsLoader, '(No matching tags)');
+    this.backupValue = [];
   }
 
   matchingOptions(tagValues) {
@@ -18,7 +19,7 @@ export default class TagAutocomplete extends Autocomplete {
   }
 
   tagStringToArray(tagString) {
-    return tagString.split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
+    return tagString.split(',').map((tag) => tag.trim());
   }
 
   tagArrayToString(tagArray) {
@@ -48,7 +49,7 @@ export default class TagAutocomplete extends Autocomplete {
   }
 
   // remove the last tag and add the option's value
-  autoFillInputValue(option) {
+  autofillInputValue(option) {
     this.backupValue = this.getInputValue();
     const newFill = this.newFillValue(option);
     this.setInputValue(newFill.concat(['']));
@@ -58,13 +59,13 @@ export default class TagAutocomplete extends Autocomplete {
 
   // prevent consecutive commas and auto insert commas when hitting space
   controlInput(e) {
-    const value = this.getInputValue();
+    const currentTagArray = this.getInputValue();
     const currentValueString = this.input.value;
     console.info({ beforeInputData: e.data, event: e })
     const prevCharIsComma = /,\s*$/.test(currentValueString);
     const improperSpaces = /,(\S|\s{2,})/.test(currentValueString);
     const inputIsSpace = /^\s+$/.test(e.data);
-    const isWordInput = /\w+/.test(e.data);
+    const isWordInput = /[\w-]+/.test(e.data);
     const isDeletion = /^delete/i.test(e.inputType);
 
     if (improperSpaces) {
@@ -72,30 +73,41 @@ export default class TagAutocomplete extends Autocomplete {
       this.setInputValue(this.tagStringToArray(corrected));
     }
 
+    if (inputIsSpace) e.preventDefault();
+
     if (e.inputType === 'insertText') {
       if ((e.data === ',') && prevCharIsComma) {
         e.preventDefault();
-      } else if (inputIsSpace) {
-        e.preventDefault();
-      } else if ((e.data === ',') && !prevCharIsComma) {
+      }
+      else if (((e.data === ',') || inputIsSpace) && !prevCharIsComma) {
         e.preventDefault();
         this.appendToInput('');
+        this.drawOptions();
       }
     } else if (e.inputType === 'deleteContentBackward') {
-      if (prevCharIsComma) {
-        const updated = currentValueString.replace(/,\s*$/, '');
-        this.setInputValue(this.tagStringToArray(updated));
-      }
+      e.preventDefault();
+      const lastTagEmpty = !currentTagArray[currentTagArray.length - 1];
+      const sliceIndex = lastTagEmpty ? -2 : -1;
+      const withoutLast = currentTagArray.slice(0, sliceIndex).concat(['']);
+      this.setInputValue(withoutLast);
+      this.dispatchUpdateEvent();
     } else if (e.inputType === 'deleteWordBackward') {
-      // const updated = currentValueString.replace(/,\s*$/, '');
-      const updated = value.slice(0, -1);
-      this.setInputValue(updated);
+      e.preventDefault();
+      this.setInputValue(['']);
+      // const inputSet = new InputEvent('input', { bubbles: true });
+      // this.input.dispatchEvent(inputSet);
+      this.dispatchUpdateEvent();
     } 
     // add else condition to strip trailing ',\s*$' from the tag string on form submit
   }
 
-  drawOverlay(match) {
-    const suggestedTagArr = this.newFillValue(match);
+  // dispatchDeleteEvent() {
+  //   const inputDeletedEvent = new CustomEvent('autocomplete-reverted');
+  //   this.input.dispatchEvent(inputDeletedEvent);
+  // }
+
+  drawOverlay(match = null) {
+    const suggestedTagArr = this.newFillValue(match ?? this.highlightedOption);
     const textSpan = create('span', { class: 'autocomplete-overlay-text' });
     this.overlay.innerHTML = null;
     this.overlay.append(textSpan);
