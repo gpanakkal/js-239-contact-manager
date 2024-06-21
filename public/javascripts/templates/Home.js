@@ -1,4 +1,4 @@
-import TagAutocomplete from "../classes/TagAutoComplete.js";
+import TagAutocomplete from "../classes/TagAutocomplete.js";
 import TemplateWrapper from "../classes/TemplateWrapper.js"
 import { hashIterable, select } from "../lib/helpers.js";
 
@@ -89,9 +89,10 @@ class Home extends TemplateWrapper {
   }
 
   // render all contacts
-  async drawContacts() {
-    this.drawMatchingContacts();
-  }
+  // remove?
+  // async drawContacts() {
+  //   this.drawMatchingContacts();
+  // }
 
   /**
    * Draws contacts that match all of the provided search parameters
