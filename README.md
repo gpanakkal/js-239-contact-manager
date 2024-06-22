@@ -8,12 +8,13 @@ To run the app, execute `npm i; npm start`. Access it via `localhost:3000`, or d
 
 This app uses [Handlebars](https://handlebarsjs.com/) for templating and the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to enable forward, backwards, and direct route navigation.
 
-The tag search function has several shortcuts:
+The tag autocomplete field has several shortcuts:
 - `Tab` autofills the highlighted option, if any.
 - `Escape` reverts autofilled input.
 - `Enter` closes the suggestion list.
 - `Backspace` deletes the latest tag; `Ctrl` + `Backspace` will empty the field.
 - The up and down arrow keys navigate the list, or bring it up if it isn't already displayed.
+- Entering a space or a comma will insert a tag separator. To create a new tag, simply add it to a new or existing contact via the form.
 
 ## Reading the Code
 
