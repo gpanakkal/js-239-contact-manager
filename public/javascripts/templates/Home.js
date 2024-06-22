@@ -93,6 +93,7 @@ class Home extends TemplateWrapper {
     const tagSearchField = select('#contact-tag-search');
     this.tagAutocomplete = new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
     this.bindEvents();
+    this.handleSearchInput();
   }
 
   bindEvents() {
@@ -146,7 +147,7 @@ class Home extends TemplateWrapper {
           if (!Array.isArray(contact.tags)) return false;
           return contact.tags.some((tag) => tag in tagHash || tag.startsWith(lastTag));
         });
-        searchValueArr.push(`tag${tagArray.length > 1 ? 's' : ''} "${tagArray}"`);
+        searchValueArr.push(`tag${tagArray.length > 1 ? 's' : ''} matching "${tagArray}"`);
       }
     }
 

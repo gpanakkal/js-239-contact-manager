@@ -1,6 +1,7 @@
 /**
  * Creates and updates history entries to permit forward and back navigation in SPAs
- * Creates history entries as a doubly-linked list containing paths and page values.
+ * Creates history entries as a doubly-linked list containing paths and page values,
+ * making history state accessible between pages.
  */
 export default class HistoryManager {
   constructor() {
@@ -13,6 +14,10 @@ export default class HistoryManager {
 
   getStoredUrl() {
     return history.state?.href ?? null;
+  }
+
+  #sameOrigin(path) {
+    return !URL.canParse(path) || new URL(path).origin === this.origin;
   }
 
   // to ensure consistent structure 
@@ -35,7 +40,7 @@ export default class HistoryManager {
       currentPageState = historyState;
       base = historyState.pageData ?? {};
     }
-    currentPageState.currentPage = Object.assign(base, pageValues);
+    currentPageState.pageData = Object.assign(base, pageValues);
 
     history.replaceState(currentPageState, '', window.location.toString());
   }
@@ -46,6 +51,7 @@ export default class HistoryManager {
    * Invoked when navigating without using the forward/back buttons.
    */
   createEntry(path) {
+    if (!this.#sameOrigin(path)) return;
     // set up the state object for the next page with a reference to the current page
     const currentPageState = history.state;
     const newHref = new URL(path, this.origin).toString();

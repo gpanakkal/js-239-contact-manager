@@ -6,7 +6,7 @@ To run the app, execute `npm i; npm start`. Access it via `localhost:3000`, or d
 
 ## Features
 
-This app uses Handlebars for templating and the History API to enable forward, backwards, and direct route navigation.
+This app uses [Handlebars](https://handlebarsjs.com/) for templating and the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to enable forward, backwards, and direct route navigation.
 
 The tag search function has several shortcuts:
 - `Tab` autofills the highlighted option, if any.
