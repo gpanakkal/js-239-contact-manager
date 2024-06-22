@@ -1,4 +1,4 @@
-import { htmlToElements } from '../lib/helpers.js';
+import { htmlToElements, select, selectAll } from '../lib/helpers.js';
 
 /* A wrapper class for sequences of Handlebars templates that collectively represent a single page. */
 export default class TemplateWrapper {
@@ -24,9 +24,9 @@ export default class TemplateWrapper {
 
   // draw the element, passing in relevant state
   draw(elementValues, useHistory = true) {
-    const historyState = useHistory ? history.state?.currentPage : {};
+    const historyState = useHistory ? history.state?.pageData : {};
     const fullValues = Object.assign({}, elementValues, historyState);
-    console.log({fullValues, caller: this});
+    // console.log({fullValues, caller: this}); // temporary
     for (let i = 0; i < this.templates.length; i += 1) {
       const html = this.templates[i].compiled(fullValues);
       // insert the element into the DOM using the insertion callback
@@ -36,5 +36,12 @@ export default class TemplateWrapper {
 
   findTemplate(name) {
     return this.templates.find(({ id }) => id === name)?.compiled ?? null;
+  }
+
+  getValues(templateId) {
+    const container = select(`[data-template-id=${templateId}]`);
+    if (!container) return {};
+    return selectAll('[value]', container)
+      .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {}) ?? {};
   }
 }

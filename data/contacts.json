@@ -3,7 +3,7 @@
     "id": 2,
     "full_name": "Victor Reyes",
     "email": "vpr@example.ca",
-    "phone_number": "3236543210",
+    "phone_number": "(323) 654-3210",
     "tags": [
       "work",
       "friend"
@@ -11,11 +11,9 @@
   },
   {
     "full_name": "Adrian Clark",
-    "phone_number": "+1 (971) 941-1880",
+    "phone_number": "+1 (971) 941-1886",
     "email": "adrian.clark@example.com",
-    "tags": [
-      "hyphenated-tags"
-    ],
+    "tags": [],
     "id": 4
   },
   {
@@ -23,7 +21,7 @@
     "phone_number": "",
     "email": "john@doe.com",
     "tags": [
-      "anon"
+      "unknown"
     ],
     "id": 5
   },
@@ -47,7 +45,7 @@
     "id": 13
   },
   {
-    "full_name": "Gabrielle\tEllison",
+    "full_name": "Gabrielle Ellison",
     "phone_number": "0215101489",
     "email": "gabrielle.ellison@example.com",
     "tags": [],

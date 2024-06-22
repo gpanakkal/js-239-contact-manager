@@ -8,12 +8,13 @@ class EditContactForm extends ContactForm {
   async draw(params = {}) {
     const contact = params.id ? await this.appState.findContact(params.id) : null;
     if (contact) {
-      super.draw(contact, true);
+      const formatted = this.appState.formatContacts([contact])[0];
+      // contact.tags = contact.tags.join(', ')
+      super.draw(formatted, true);
     } else {
       const navCreateForm = new CustomEvent('appnavigation', { detail: '/' });
       document.dispatchEvent(navCreateForm);
     }
-      
   }
 }
 

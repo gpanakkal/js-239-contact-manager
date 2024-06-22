@@ -36,6 +36,12 @@ export default class TagAutocomplete extends Autocomplete {
     this.input.value = this.tagArrayToString(tagArray);
   }
 
+  formatInputValue() {
+    const current = this.getInputValue();
+    const withoutEmpty = current.filter((tag) => tag.length > 0);
+    return withoutEmpty;
+  }
+
   appendToInput(string) {
     const current = this.getInputValue();
     this.setInputValue(current.concat([string]));

@@ -4,12 +4,12 @@ import { hashIterable, select, selectParent, htmlToElements } from "../lib/helpe
 
 const matchOptionPartial = /* html */ `
 <script id="matchOptionPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
-  <li class="autocomplete-ui-choice" value="{{match}}">{{match}}</li>
+  <li data-template-id="matchOptionPartial" class="autocomplete-ui-choice" value="{{match}}">{{match}}</li>
 </script>`;
 
 const contactCardPartial = /* html */`
 <script id="contactCardPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
-<div class="contact-card">
+<div id="contactCardPartial" data-template-id=contactCardPartial" class="contact-card">
   <h3 class="cardHeading">{{full_name}}</h3>
   <dl>
     {{#if phone_number}}
@@ -22,7 +22,8 @@ const contactCardPartial = /* html */`
     {{/if}}
     {{#if tags}}
       <dt>Tags:</dt>
-      <dd>{{#each tags}}#{{this}}{{#unless @last}}, {{/unless}}{{/each}}</dd>
+      <dd>{{tags}}</dd>
+      <!-- <dd>{{#each tags}}#{{this}}{{#unless @last}}, {{/unless}}{{/each}}</dd> -->
     {{/if}}
   </dl>
   <div class="contact actions">
@@ -32,9 +33,9 @@ const contactCardPartial = /* html */`
 </div>
 </script>`;
 
-const homeBar = /* html */ `
+const homeActions = /* html */ `
 <script id="homeActions" type="text/x-handlebars" nonce=''>
-  <div class="home actions">
+  <div id="homeActions" data-template-id="homeActions" class="home actions">
     <div>
       <a class="navigation btn large add-contact" href="#contacts/new">Add Contact</a>
     </div>
@@ -44,7 +45,7 @@ const homeBar = /* html */ `
         id="contact-tag-search" 
         class="contact-tag-search" 
         placeholder="Filter by tags..."
-        value="{{searchValue}}"
+        value="{{contact-tag-search}}"
       >
     </div>
     <div>
@@ -53,7 +54,7 @@ const homeBar = /* html */ `
         id="contact-name-search" 
         class="contact-name-search" 
         placeholder="Filter by name..."
-        value="{{searchValue}}"
+        value="{{contact-name-search}}"
       >
     </div>
   </div>
@@ -62,7 +63,7 @@ const homeBar = /* html */ `
 const contactList = /* html */ `
 <script id="contactList" type="text/x-handlebars" nonce=''>
   {{#if contacts}}
-    <div id='contact-list' class='contact-list-grid'>
+    <div id='contactList' class='contact-list-grid'>
       {{#if contacts.length}}
         {{#each contacts}}
           {{> contactCardPartial}}
@@ -70,21 +71,19 @@ const contactList = /* html */ `
       {{/if}}
     </div>
   {{else}}
+    <div id="contactList" class="no-contacts">
     {{#if searchValue}}
-      <div id="contact-list" class="no-contacts">
         <h3>There are no contacts with {{searchValue}}.</h3>
-      </div>
     {{else}}
-      <div id="contact-list" class="no-contacts">
         <h3>There are no contacts yet.</h3>
-      </div>
-    {{/if}}
+      {{/if}}
+    </div>
   {{/if}}
 </script>`;
 
 class Home extends TemplateWrapper {
   constructor(insertionCallback, appState) {
-    super([contactCardPartial, matchOptionPartial, homeBar, contactList], insertionCallback, appState);
+    super([contactCardPartial, matchOptionPartial, homeActions, contactList], insertionCallback, appState);
   }
 
   async draw() {
@@ -92,11 +91,11 @@ class Home extends TemplateWrapper {
     const formatted = this.appState.formatContacts(contacts);
     super.draw({ contacts: formatted });
     const tagSearchField = select('#contact-tag-search');
-    new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
+    this.tagAutocomplete = new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
     // select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
     select('#contact-tag-search').addEventListener('autocomplete-updated', this.handleSearchInput.bind(this));
-    select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
+    select('#contactList').addEventListener('click', this.handleDeleteClick.bind(this));
   }
 
   handleSearchInput(e) {
@@ -132,7 +131,7 @@ class Home extends TemplateWrapper {
    */
   async drawMatchingContacts({ full_name, tagArray }) {
     let contacts = await this.appState.getContacts();
-    const existingList = select('#contact-list');
+    const existingList = select('#contactList');
     if (existingList) existingList.remove();
     let searchValueArr = [];
     if (full_name) {
@@ -156,7 +155,18 @@ class Home extends TemplateWrapper {
     const searchValue = searchValueArr.join(' and ');
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
     this.insertionCallback(newList);
-    select('#contact-list').addEventListener('click', this.handleDeleteClick.bind(this));
+    select('#contactList').addEventListener('click', this.handleDeleteClick.bind(this));
+  }
+
+  getValues() {
+    const elementIds = this.templates.map((template) => template.id);
+    const values = elementIds.reduce((combined, id) => {
+      return Object.assign(combined, super.getValues(id));
+    }, {});
+    // const values = { ...selectAll('[value]', this.templates)
+    // .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {});
+    values.tags = this.tagAutocomplete.getInputValue();
+    return values;
   }
 }
 

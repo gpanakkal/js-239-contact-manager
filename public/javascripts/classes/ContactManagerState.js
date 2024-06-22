@@ -1,5 +1,5 @@
 import contactAPI from "../lib/contactAPI.js";
-import { formatNumber } from "../lib/helpers.js";
+import { formatNumber, hashIterable } from "../lib/helpers.js";
 
 /* Caches contacts and interfaces with the API. */
 export default class ContactManagerState {
@@ -12,26 +12,39 @@ export default class ContactManagerState {
     return this.#contacts.slice();
   }
 
-  #updateLocalContacts(updatedArr) {
-    this.#contacts = updatedArr;
+  #setLocalContacts(contacts) {
+    this.#contacts = contacts;
+  }
+
+  async #updateLocalContacts(updatedContacts) {
+    const current = await this.getContacts();
+    const updateHash = hashIterable(updatedContacts, (contact) => ({ [contact.id]: contact }));
+    const updated = current.map((contact) => contact.id in updateHash ? updateHash[contact.id] : contact);
+    this.#setLocalContacts(updated);
   }
 
   async #fetchContacts() {
     const fetched = await contactAPI.fetchContacts();
-    this.#updateLocalContacts(fetched);
+    this.#setLocalContacts(fetched);
   }
 
   async findContact(id) {
     return (await this.getContacts()).find((contact) => String(contact.id) === String(id));
   }
 
+  // format fields for text display
   formatContacts(contacts) {
     return contacts.map((contact) => {
       const formatted = {
         phone_number: formatNumber(contact.phone_number),
+        tags: this.tagArrayToString(contact.tags),
       };
       return { ...contact, ...formatted };
     });
+  }
+
+  tagArrayToString(tagArray) {
+    return tagArray.map((tag) => tag.trim()).join(', ');
   }
 
   async createContact(newContact) {
@@ -47,7 +60,7 @@ export default class ContactManagerState {
     if (result) {
       const existing = await this.findContact(updatedContact.id);
       const updated = JSON.parse(result);
-      Object.assign(existing, updated);
+      this.#updateLocalContacts(Object.assign(existing, updated));
     }
     return result;
   }
@@ -58,7 +71,7 @@ export default class ContactManagerState {
     if (deleteResult !== null) {
       const remaining = this.#contacts.filter((contact) => String(contact.id) !== String(id));
       console.table(remaining)
-      this.#updateLocalContacts(remaining);
+      this.#setLocalContacts(remaining);
     }
     return deleteResult;
   }

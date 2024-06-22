@@ -7,8 +7,8 @@ const contactForm = /* html */ `
   <h2 class='page-header'>
     {{#if contact}}Edit{{else}}Create{{/if}} Contact
   </h2>
-  <form id="contact-form">
-    <div id="contact-form-grid">
+  <form id='contact-form' data-template-id="contactForm" class="contact-form">
+    <div id="contact-form-grid" class='contact-form-grid'>
       <input type="hidden" name="id" id="id" value="{{id}}">
       <label for="full_name">Full name:</label>
       <div class="input-box">
@@ -27,7 +27,7 @@ const contactForm = /* html */ `
       <div></div>
         <label for="tags">Tags:</label>
         <div class="input-box">
-          <input type='text' name='tags' id="tags" value="{{#each tags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}">
+          <input type='text' name='tags' id="tags" value="{{tags}}">
         </div>
         <div></div>
       <label></label>
@@ -49,13 +49,14 @@ export default class ContactForm extends TemplateWrapper {
   }
 
   bindContactFormEvents() {
-    select('#contact-form').addEventListener('submit', this.#handleFormSubmit.bind(this));
+    this.form.addEventListener('submit', this.#handleFormSubmit.bind(this));
   }
 
   async draw(contact, useHistory) {
     super.draw(contact, useHistory);
+    this.form = select('#contact-form');
     this.bindContactFormEvents();
-    new TagAutocomplete(select('#contact-form #tags'), this.appState.getTagSet.bind(this.appState));
+    this.tagAutocomplete = new TagAutocomplete(select('#contact-form #tags'), this.appState.getTagSet.bind(this.appState));
     select('#full_name').focus();
   }
 
@@ -79,7 +80,9 @@ export default class ContactForm extends TemplateWrapper {
   #formatFormValues(formObj) {
     const formatted = { ...formObj };
     formatted.full_name = formObj.full_name.trim();
-    formatted.tags = formObj.tags.trim().split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
+    // formatted.tags 
+    // formatted.tags = formObj.tags.trim().split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
+    formatted.tags = this.tagAutocomplete.formatInputValue();
     return formatted;
   }
 
@@ -113,7 +116,7 @@ export default class ContactForm extends TemplateWrapper {
       },
       {
         key: 'tags',
-        check: tags.every((tag) => tagPattern.test(tag)),
+        check: tags.length === 0 || tags.every((tag) => tagPattern.test(tag)),
         message: 'Tags must only contain letters, numbers, underscores, and hyphens',
       },
     ];
@@ -147,6 +150,13 @@ export default class ContactForm extends TemplateWrapper {
     // await result;
     const navHome = new CustomEvent('appnavigation', { detail: '/' });
     document.dispatchEvent(navHome);
+  }
+
+  getValues() {
+    const templateId = this.form.dataset.templateId;
+    const values = super.getValues(templateId);
+    values.tags = this.tagAutocomplete.getInputValue();
+    return values;
   }
 }
 

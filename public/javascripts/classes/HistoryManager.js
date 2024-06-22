@@ -11,7 +11,7 @@ export default class HistoryManager {
     return history.state;
   }
 
-  getUrl() {
+  getStoredUrl() {
     return history.state?.href ?? null;
   }
 
@@ -45,13 +45,11 @@ export default class HistoryManager {
    * Saves the current page state to its history entry, then passes the same 
    * state object to be stored on the previousPageState property.
    * Invoked when navigating without using the forward/back buttons.
-   * @param {string} path The URL's path
-   * @param {{ [key: string]: string }} params key: value pairs of query string parameters
    */
-  createEntry(path, params) {    // set up the state object for the next page with a reference to the current page
+  createEntry(path) {    // set up the state object for the next page with a reference to the current page
     const currentPageState = history.state;
     const newHref = new URL(path, this.origin).toString();
-    const nextPageState = this.#initEntry(currentPageState, newHref, params, null)
+    const nextPageState = this.#initEntry(currentPageState, newHref, null, null)
     // {
     //   previousPage: currentPageState,
     //   pageData: params,

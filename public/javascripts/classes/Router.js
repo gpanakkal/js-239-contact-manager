@@ -8,14 +8,6 @@ import TemplateWrapper from "./TemplateWrapper.js";
 export default class Router {
   static #getPath = (url) =>  url.hash || url.pathname;
 
-  static #routeMatchRegex(routePath) {
-    const patternString = routePath
-      .split('/')
-      .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
-      .join('/');
-    return new RegExp(`^${patternString}/?$`, 'i');
-  }
-
   static #segmentPath(path) {
     return path?.replace(/^#/, '').split('/') ?? null;
   }
@@ -35,6 +27,8 @@ export default class Router {
     this.routes = appRoutes;
     this.container = appContainer;
     this.appState = appState;
+    this.origin = window.location.origin;
+
     this.boundClickHandler = this.#handleNavClick.bind(this);
     this.boundAuxClickHandler = this.#handleAuxClick.bind(this);
     this.boundCustomNavHandler = this.#handleCustomNav.bind(this);
@@ -47,19 +41,37 @@ export default class Router {
   bindEvents() {
     window.addEventListener('popstate', (e) => {
       e.stopPropagation();
-      const historyUrl = this.historyManager.getUrl();
+      const historyUrl = this.historyManager.getStoredUrl();
       const urlRaw = historyUrl ?? window.location.href;
-      const url = new URL(urlRaw);
-      const path = Router.#getPath(url);
-      const route = this.#matchRoute(path);
-      const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+      const { route, params } = this.#getRouteFromUrl(urlRaw);
+
+      // const url = new URL(urlRaw);
+      // const path = Router.#getPath(url);
+      // const route = this.#matchRoute(path);
+      // const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
       this.#draw(this.routes[route], params);
     });
+  }
+
+  #getRouteFromUrl(urlString) {
+    const url = new URL(urlString);
+    const path = Router.#getPath(url);
+    const route = this.#matchRoute(path);
+    const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+    return { route, params };
   }
   
   #getRoutePatterns() {
     return Object.entries(this.routes)
-      .map(([routePath]) => ({ pattern: Router.#routeMatchRegex(routePath), path: routePath }));
+      .map(([routePath]) => ({ pattern: this.#routeMatchRegex(routePath), path: routePath }));
+  }
+
+  #routeMatchRegex(routePath) {
+    const patternString = routePath
+      .split('/')
+      .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
+      .join('/');
+    return new RegExp(`^(${this.origin}\/?)?${patternString}/?$`, 'i');
   }
 
   // given a nav path, finds the corresponding route
@@ -111,31 +123,36 @@ export default class Router {
 
   // draw the templates corresponding to the path and update the history
   #navTo(path, route) {
-    console.warn('navigating to', path)
-    const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-    const pageValues = this.#getPageValues();
+    // get the current route to define how to extract values from the page
+    const currentUrl = window.location;
+    const { route: currentRoute, params: currentParams } = this.#getRouteFromUrl(currentUrl);
+    const pageValues = this.#getPageValues(this.routes[currentRoute]);
     this.historyManager.setEntry(pageValues, { update: true });
-    this.historyManager.createEntry(path, params);
+
+    const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
+    this.historyManager.createEntry(path);
     this.#draw(this.routes[route ?? '/'], params);
   }
 
-  // 
+  // fresh navigation from a new tab
   async #navWithoutHistory() {
     const path = window.location.hash;
     const route = this.#matchRoute(path || '/');
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-    console.log({params, path, route})
-    const pageValues = this.#getPageValues();
+    // console.log({params, path, route})
+    // const pageValues = this.#getPageValues();
     // this.#setCurrentHistory();
-    this.historyManager.setEntry(pageValues, { update: false });
+    this.historyManager.setEntry(null, { update: false });
     const nextPage = this.routes[route];
-    console.log({nextPage})
+    // console.log({nextPage})
     this.#draw(this.routes[route], params);
   }
 
-  #getPageValues() {
-    return selectAll('[value]', this.container)
-    .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {});
+  // revise to call corresponding method on each passed route's wrapperArray
+  #getPageValues(wrapperArray) {
+    return wrapperArray.map((wrapper) => wrapper.getValues())
+    // return selectAll('[value]', this.container)
+    .reduce((acc, elementValues) => Object.assign(acc, elementValues), {});
   }
 
   /**
