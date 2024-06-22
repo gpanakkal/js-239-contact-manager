@@ -16,7 +16,7 @@ export default class HistoryManager {
   }
 
   // to ensure consistent structure 
-  initEntry(previousPageEntry, href, pageData = null, nextPageEntry = null) {
+  #initEntry(previousPageEntry, href, pageData = null, nextPageEntry = null) {
     return {
       previousPage: previousPageEntry,
       href,
@@ -29,7 +29,7 @@ export default class HistoryManager {
   setEntry(pageValues, { replace: update = false } = {}) {
     const historyState = this.getState();
     const url = window.location.toString();
-    let currentPageState = this.initEntry(null, url, null, null);
+    let currentPageState = this.#initEntry(null, url, null, null);
     let base = {};
     if (update && historyState) {
       currentPageState = historyState;
@@ -51,12 +51,13 @@ export default class HistoryManager {
   createEntry(path, params) {    // set up the state object for the next page with a reference to the current page
     const currentPageState = history.state;
     const newHref = new URL(path, this.origin).toString();
-    const nextPageState = {
-      previousPage: currentPageState,
-      pageData: params,
-      href: newHref,
-      nextPage: null,
-    };
+    const nextPageState = this.#initEntry(currentPageState, newHref, params, null)
+    // {
+    //   previousPage: currentPageState,
+    //   pageData: params,
+    //   href: newHref,
+    //   nextPage: null,
+    // };
     // create a reference to the next page
     currentPageState.nextPage = nextPageState;
     // save state entries

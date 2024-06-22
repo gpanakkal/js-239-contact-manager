@@ -48,8 +48,6 @@ export default class Router {
     window.addEventListener('popstate', (e) => {
       e.stopPropagation();
       const historyUrl = this.historyManager.getUrl();
-      // const urlRaw = historyState === null ? window.location.href : historyState.href;
-      // const urlRaw = history.state ? history.state.href : window.location.href;
       const urlRaw = historyUrl ?? window.location.href;
       const url = new URL(urlRaw);
       const path = Router.#getPath(url);
@@ -115,10 +113,8 @@ export default class Router {
   #navTo(path, route) {
     console.warn('navigating to', path)
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-    // this.#setCurrentHistory(history.state);
     const pageValues = this.#getPageValues();
     this.historyManager.setEntry(pageValues, { update: true });
-    // this.#newHistoryEntry(path, params);
     this.historyManager.createEntry(path, params);
     this.#draw(this.routes[route ?? '/'], params);
   }
