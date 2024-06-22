@@ -1,6 +1,10 @@
-import TagAutocomplete from "../classes/TagAutocomplete.js";
-import TemplateWrapper from "../classes/TemplateWrapper.js"
-import { hashIterable, select, selectParent, htmlToElements } from "../lib/helpers.js";
+/* eslint-disable no-restricted-globals */
+/* eslint-disable no-alert */
+import TagAutocomplete from '../classes/TagAutocomplete.js';
+import TemplateWrapper from '../classes/TemplateWrapper.js';
+import {
+  hashIterable, select, selectParent,
+} from '../lib/helpers.js';
 
 const matchOptionPartial = /* html */ `
 <script id="matchOptionPartial" data-template-type="partial" type="text/x-handlebars">
@@ -83,7 +87,12 @@ const contactList = /* html */ `
 
 class Home extends TemplateWrapper {
   constructor(insertionCallback, appState) {
-    super([contactCardPartial, matchOptionPartial, homeActions, contactList], insertionCallback, appState);
+    super([
+      contactCardPartial,
+      matchOptionPartial,
+      homeActions,
+      contactList,
+    ], insertionCallback, appState);
   }
 
   async draw() {
@@ -91,7 +100,10 @@ class Home extends TemplateWrapper {
     const formatted = this.appState.formatContacts(contacts);
     super.draw({ contacts: formatted });
     const tagSearchField = select('#contact-tag-search');
-    this.tagAutocomplete = new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
+    this.tagAutocomplete = new TagAutocomplete(
+      tagSearchField,
+      this.appState.getTagSet.bind(this.appState),
+    );
     this.bindEvents();
     this.handleSearchInput();
   }
@@ -116,10 +128,10 @@ class Home extends TemplateWrapper {
     if (!confirmed) return;
     const { id } = e.target.dataset;
     this.appState.deleteContact(id)
-      .then((result) => {
+      .then(() => {
         const parent = selectParent('div.contact-card', e.target);
         parent.remove();
-      }).catch((error) => alert('Contact was not deleted!'));
+      }).catch(() => alert('Contact was not deleted!'));
   }
 
   /**
@@ -130,7 +142,7 @@ class Home extends TemplateWrapper {
     let contacts = await this.appState.getContacts();
     const existingList = select('#contactList');
     if (existingList) existingList.remove();
-    let searchValueArr = [];
+    const searchValueArr = [];
 
     if (full_name) {
       const namePattern = new RegExp(full_name, 'i');
@@ -139,8 +151,8 @@ class Home extends TemplateWrapper {
     }
 
     if (tagArray) {
-      if (!Array.isArray(tagArray)) throw new TypeError(`Must pass tags as an array!`);
-      if (tagArray.length) { 
+      if (!Array.isArray(tagArray)) throw new TypeError('Must pass tags as an array!');
+      if (tagArray.length) {
         const tagHash = hashIterable(tagArray);
         const lastTag = tagArray[tagArray.length - 1];
         contacts = contacts.filter((contact) => {
@@ -160,9 +172,8 @@ class Home extends TemplateWrapper {
 
   getValues() {
     const elementIds = this.templates.map((template) => template.id);
-    const values = elementIds.reduce((combined, id) => {
-      return Object.assign(combined, super.getValues(id));
-    }, {});
+    const values = elementIds.reduce((combined, id) => (
+      { ...combined, ...super.getValues(id) }), {});
     values.tags = this.tagAutocomplete.getInputValue();
     return values;
   }

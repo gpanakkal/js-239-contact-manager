@@ -1,3 +1,5 @@
+/* eslint-disable class-methods-use-this */
+/* eslint-disable no-restricted-globals */
 /**
  * Creates and updates history entries to permit forward and back navigation in SPAs
  * Creates history entries as a doubly-linked list containing paths and page values,
@@ -20,7 +22,7 @@ export default class HistoryManager {
     return !URL.canParse(path) || new URL(path).origin === this.origin;
   }
 
-  // to ensure consistent structure 
+  // to ensure consistent structure
   #initEntry(previousPageEntry, href, pageData = null, nextPageEntry = null) {
     return {
       previousPage: previousPageEntry,
@@ -31,7 +33,7 @@ export default class HistoryManager {
   }
 
   // Updates the history state, or replaces it if specified or no state exists
-  setEntry(pageValues, { replace: update = false } = {}) {
+  setEntry(pageValues, { update = false } = {}) {
     const historyState = this.getState();
     const url = window.location.toString();
     let currentPageState = this.#initEntry(null, url, null, null);
@@ -46,7 +48,7 @@ export default class HistoryManager {
   }
 
   /**
-   * Saves the current page state to its history entry, then passes the same 
+   * Saves the current page state to its history entry, then passes the same
    * state object to be stored on the previousPageState property.
    * Invoked when navigating without using the forward/back buttons.
    */
@@ -55,7 +57,7 @@ export default class HistoryManager {
     // set up the state object for the next page with a reference to the current page
     const currentPageState = history.state;
     const newHref = new URL(path, this.origin).toString();
-    const nextPageState = this.#initEntry(currentPageState, newHref, null, null)
+    const nextPageState = this.#initEntry(currentPageState, newHref, null, null);
 
     // set a reference to the next page
     currentPageState.nextPage = nextPageState;

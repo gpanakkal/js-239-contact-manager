@@ -1,5 +1,6 @@
-import { create, hashIterable } from "../lib/helpers.js";
-import Autocomplete from "./Autocomplete.js";
+/* eslint-disable class-methods-use-this */
+import { create, hashIterable } from '../lib/helpers.js';
+import Autocomplete from './Autocomplete.js';
 
 export default class TagAutocomplete extends Autocomplete {
   constructor(input, optionsLoader) {
@@ -13,8 +14,7 @@ export default class TagAutocomplete extends Autocomplete {
     const lastTag = inputTags[inputTags.length - 1];
     const previousTags = hashIterable(inputTags.slice(0, -1));
     const lower = lastTag.toLowerCase();
-    return tagValues.filter((option) => 
-      !(option in previousTags)
+    return tagValues.filter((option) => !(option in previousTags)
       && option.toLowerCase().startsWith(lower));
   }
 
@@ -32,7 +32,7 @@ export default class TagAutocomplete extends Autocomplete {
   }
 
   setInputValue(tagArray) {
-    if (!Array.isArray(tagArray)) throw new TypeError(`Must pass an array of strings`);
+    if (!Array.isArray(tagArray)) throw new TypeError('Must pass an array of strings');
     this.input.value = this.tagArrayToString(tagArray);
   }
 
@@ -71,8 +71,8 @@ export default class TagAutocomplete extends Autocomplete {
     const prevCharIsComma = /,\s*$/.test(currentValueString);
     const improperSpaces = /,(\S|\s{2,})/.test(currentValueString);
     const inputIsSpace = /^\s+$/.test(e.data);
-    const isWordInput = /[\w-]+/.test(e.data);
-    const isDeletion = /^delete/i.test(e.inputType);
+    // const isWordInput = /[\w-]+/.test(e.data);
+    // const isDeletion = /^delete/i.test(e.inputType);
 
     if (improperSpaces) {
       const corrected = currentValueString.replace(/,(\s{0}|\s{2,})/, ', ');
@@ -84,8 +84,7 @@ export default class TagAutocomplete extends Autocomplete {
     if (e.inputType === 'insertText') {
       if ((e.data === ',') && prevCharIsComma) {
         e.preventDefault();
-      }
-      else if (((e.data === ',') || inputIsSpace) && !prevCharIsComma) {
+      } else if (((e.data === ',') || inputIsSpace) && !prevCharIsComma) {
         e.preventDefault();
         this.appendToInput('');
         this.drawOptions();
@@ -102,7 +101,7 @@ export default class TagAutocomplete extends Autocomplete {
       e.preventDefault();
       this.setInputValue(['']);
       this.clearUI();
-    } 
+    }
   }
 
   drawOverlay(match = null) {

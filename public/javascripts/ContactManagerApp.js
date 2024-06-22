@@ -1,9 +1,9 @@
-import ContactManagerState from "./classes/ContactManagerState.js";
-import Router from "./classes/Router.js";
-import { select } from "./lib/helpers.js";
-import CreateContactForm from "./templates/CreateContactForm.js";
-import EditContactForm from "./templates/EditContactForm.js";
-import Home from "./templates/Home.js";
+import ContactManagerState from './classes/ContactManagerState.js';
+import Router from './classes/Router.js';
+import { select } from './lib/helpers.js';
+import CreateContactForm from './templates/CreateContactForm.js';
+import EditContactForm from './templates/EditContactForm.js';
+import Home from './templates/Home.js';
 
 class ContactManager {
   constructor(container) {

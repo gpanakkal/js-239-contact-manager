@@ -1,4 +1,10 @@
-import { create, htmlToElements, select, selectAll } from "../lib/helpers.js";
+/* eslint-disable import/extensions */
+import {
+  create,
+  htmlToElements,
+  select,
+  selectAll,
+} from '../lib/helpers.js';
 
 const wrapperTemplate = /* html */ `
 <div class="autocomplete-wrapper">
@@ -159,7 +165,7 @@ export default class Autocomplete {
   }
 
   restoreBackupValue() {
-    if (this.backupValue === null) return null;
+    if (this.backupValue === null) return;
     this.setInputValue(this.backupValue);
     this.dispatchUpdateEvent();
     this.resetUI();
@@ -175,12 +181,13 @@ export default class Autocomplete {
 
   matchingOptions(optionValues) {
     const inputText = this.getInputValue();
-    return optionValues.filter((option) => option.toLowerCase().startsWith(inputText.toLowerCase()));
+    return optionValues
+      .filter((option) => option.toLowerCase().startsWith(inputText.toLowerCase()));
   }
 
   findListOption(value) {
-    const allOptions = selectAll('.autocomplete-ui-choice', this.wrapper)
-    return allOptions.find((option) => option.textContent = value);
+    const allOptions = selectAll('.autocomplete-ui-choice', this.wrapper);
+    return allOptions.find((option) => option.textContent === value);
   }
 
   setBestMatch(match) {
@@ -195,7 +202,7 @@ export default class Autocomplete {
 
   matchListItems(options) {
     return options.map((option) => {
-      return create('li', { class: "autocomplete-ui-choice" }, { textContent: option });
+      return create('li', { class: 'autocomplete-ui-choice' }, { textContent: option });
     });
   }
 

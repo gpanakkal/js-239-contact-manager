@@ -1,10 +1,6 @@
-import ContactForm from "../classes/ContactForm.js";
+import ContactForm from '../classes/ContactForm.js';
 
 class EditContactForm extends ContactForm {
-  constructor(insertionCallback, appState) {
-    super(insertionCallback, appState);
-  }
-
   async draw(params = {}) {
     const contact = params.id ? await this.appState.findContact(params.id) : null;
     if (contact) {

@@ -1,10 +1,13 @@
+/* eslint-disable no-restricted-globals */
 import { htmlToElements, select, selectAll } from '../lib/helpers.js';
 
-/* A wrapper class for sequences of Handlebars templates that collectively represent a section of a page. */
+/* A wrapper class for sequences of Handlebars templates
+that collectively represent a section of a page. */
 export default class TemplateWrapper {
-  constructor (templateStrings, insertionCallback, appState) {
+  constructor(templateStrings, insertionCallback, appState) {
     this.templates = [];
-    this.insertionCallback = insertionCallback; // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)
+    this.insertionCallback = insertionCallback;
+    // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)
     this.appState = appState;
     this.templates = [];
     this.#initHandlebars(templateStrings);
@@ -25,7 +28,7 @@ export default class TemplateWrapper {
   // draw the element, passing in relevant state
   draw(elementValues, useHistory = true) {
     const historyState = useHistory ? history.state?.pageData : {};
-    const fullValues = Object.assign({}, elementValues, historyState);
+    const fullValues = { ...elementValues, ...historyState };
     for (let i = 0; i < this.templates.length; i += 1) {
       const html = this.templates[i].compiled(fullValues);
       // insert the element into the DOM using the insertion callback
@@ -37,6 +40,7 @@ export default class TemplateWrapper {
     return this.templates.find(({ id }) => id === name)?.compiled ?? null;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   getValues(templateId) {
     const container = select(`[data-template-id=${templateId}]`);
     if (!container) return {};

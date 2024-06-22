@@ -1,9 +1,8 @@
-import HistoryManager from "./HistoryManager.js";
-import TemplateWrapper from "./TemplateWrapper.js";
+import HistoryManager from './HistoryManager.js';
 
 /* Router for page navigation via hash URLs */
 export default class Router {
-  static #getPath = (url) =>  url.hash || url.pathname;
+  static #getPath = (url) => url.hash || url.pathname;
 
   static #segmentPath(path) {
     return path?.replace(/^#/, '').split('/') ?? null;
@@ -12,7 +11,7 @@ export default class Router {
   static #extractParams(navPath, routePath) {
     const routeSegments = this.#segmentPath(routePath);
     const navSegments = this.#segmentPath(navPath);
-  
+
     return navSegments.reduce((acc, value, i) => {
       const paramSegment = routeSegments[i];
       if (!paramSegment.match(/^:/)) return acc;
@@ -27,7 +26,7 @@ export default class Router {
     this.origin = window.location.origin;
 
     this.boundClickHandler = this.#handleNavClick.bind(this);
-    this.boundAuxClickHandler = this.#handleAuxClick.bind(this);
+    this.boundAuxClickHandler = Router.#handleAuxClick.bind(this);
     this.boundCustomNavHandler = this.#handleCustomNav.bind(this);
     this.routePatterns = this.#getRoutePatterns();
     this.historyManager = new HistoryManager();
@@ -41,7 +40,10 @@ export default class Router {
       const historyUrl = this.historyManager.getStoredUrl();
       const urlRaw = historyUrl ?? window.location.href;
       const { route, params } = this.#getRouteFromUrl(urlRaw);
-      this.#draw(this.routes[route], params);
+      const wrapperArray = this.routes[route];
+      const pageValues = Router.#getPageValues(wrapperArray);
+      this.historyManager.setEntry(pageValues, { update: true });
+      this.#draw(wrapperArray, params);
     });
   }
 
@@ -52,7 +54,7 @@ export default class Router {
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
     return { route, params };
   }
-  
+
   #getRoutePatterns() {
     return Object.entries(this.routes)
       .map(([routePath]) => ({ pattern: this.#routeMatchRegex(routePath), path: routePath }));
@@ -61,9 +63,9 @@ export default class Router {
   #routeMatchRegex(routePath) {
     const patternString = routePath
       .split('/')
-      .map((segment) => segment.replace(/(:\w+)/, "\\w+"))
+      .map((segment) => segment.replace(/(:\w+)/, '\\w+'))
       .join('/');
-    return new RegExp(`^(${this.origin}\/?)?${patternString}/?$`, 'i');
+    return new RegExp(`^(${this.origin}/?)?${patternString}/?$`, 'i');
   }
 
   // given a nav path, finds the corresponding route
@@ -73,7 +75,7 @@ export default class Router {
     return match.path;
   }
 
-  #bindNavigationEvents() {    
+  #bindNavigationEvents() {
     document.removeEventListener('appnavigation', this.boundCustomNavHandler);
     document.addEventListener('appnavigation', this.boundCustomNavHandler);
     this.container.removeEventListener('click', this.boundClickHandler);
@@ -82,10 +84,10 @@ export default class Router {
     this.container.addEventListener('auxclick', this.boundAuxClickHandler);
   }
 
-  #handleAuxClick(e) {
-    const isNavLink = e.target.classList.contains('navigation') 
+  static #handleAuxClick(e) {
+    const isNavLink = e.target.classList.contains('navigation')
       && e.target.tagName === 'A';
-    if (!isNavLink) return; 
+    if (!isNavLink) return;
     e.preventDefault();
   }
 
@@ -96,9 +98,9 @@ export default class Router {
   }
 
   #handleNavClick(e) {
-    const isNavLink = e.target.classList.contains('navigation') 
+    const isNavLink = e.target.classList.contains('navigation')
       && e.target.tagName === 'A';
-    if (!isNavLink) return; 
+    if (!isNavLink) return;
     e.preventDefault();
     const path = e.target.getAttribute('href');
     const route = this.#matchRoute(path);
@@ -109,7 +111,7 @@ export default class Router {
   #navTo(path, route) {
     const currentUrl = window.location;
     const { route: currentRoute } = this.#getRouteFromUrl(currentUrl);
-    const pageValues = this.#getPageValues(this.routes[currentRoute]);
+    const pageValues = Router.#getPageValues(this.routes[currentRoute]);
     this.historyManager.setEntry(pageValues, { update: true });
 
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
@@ -127,14 +129,14 @@ export default class Router {
     this.#draw(nextPage, params);
   }
 
-  #getPageValues(wrapperArray) {
+  static #getPageValues(wrapperArray) {
     return wrapperArray.map((wrapper) => wrapper.getValues())
-    .reduce((acc, elementValues) => Object.assign(acc, elementValues), {});
+      .reduce((acc, elementValues) => Object.assign(acc, elementValues), {});
   }
 
   /**
    * Re-render the entire app container, optionally passing in state to fill element values
-   * @param {TemplateWrapper[]} wrapperArray 
+   * @param {TemplateWrapper[]} wrapperArray
    * @param {{ [key: string]: string }} params
    */
   async #draw(wrapperArray, params = undefined) {

@@ -1,5 +1,5 @@
-import contactAPI from "../lib/contactAPI.js";
-import { formatNumber, hashIterable } from "../lib/helpers.js";
+import contactAPI from '../lib/contactAPI.js';
+import { formatNumber, hashIterable } from '../lib/helpers.js';
 
 /* Caches contacts and interfaces with the API. */
 export default class ContactManagerState {
@@ -17,7 +17,8 @@ export default class ContactManagerState {
   async #updateLocalContacts(updatedContacts) {
     const current = await this.getContacts();
     const updateHash = hashIterable(updatedContacts, (contact) => ({ [contact.id]: contact }));
-    const updated = current.map((contact) => contact.id in updateHash ? updateHash[contact.id] : contact);
+    const updated = current
+      .map((contact) => (contact.id in updateHash ? updateHash[contact.id] : contact));
     this.#setLocalContacts(updated);
   }
 

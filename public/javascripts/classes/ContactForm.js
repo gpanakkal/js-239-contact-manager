@@ -1,6 +1,7 @@
-import TagAutocomplete from "./TagAutocomplete.js";
-import TemplateWrapper from "./TemplateWrapper.js";
-import { select, selectAll } from "../lib/helpers.js";
+/* eslint-disable camelcase */
+import TagAutocomplete from './TagAutocomplete.js';
+import TemplateWrapper from './TemplateWrapper.js';
+import { select, selectAll } from '../lib/helpers.js';
 
 const contactForm = /* html */ `
 <script id="contactForm" type="text/x-handlebars">
@@ -71,9 +72,9 @@ export default class ContactForm extends TemplateWrapper {
       return false;
     }
     this.#submitContactForm(formattedFormObj);
+    return true;
   }
 
-  
   #formatFormValues(formObj) {
     const formatted = { ...formObj };
     formatted.full_name = formObj.full_name.trim();
