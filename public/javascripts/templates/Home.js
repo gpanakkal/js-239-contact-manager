@@ -3,12 +3,12 @@ import TemplateWrapper from "../classes/TemplateWrapper.js"
 import { hashIterable, select, selectParent, htmlToElements } from "../lib/helpers.js";
 
 const matchOptionPartial = /* html */ `
-<script id="matchOptionPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
+<script id="matchOptionPartial" data-template-type="partial" type="text/x-handlebars">
   <li data-template-id="matchOptionPartial" class="autocomplete-ui-choice" value="{{match}}">{{match}}</li>
 </script>`;
 
 const contactCardPartial = /* html */`
-<script id="contactCardPartial" data-template-type="partial" type="text/x-handlebars" nonce=''>
+<script id="contactCardPartial" data-template-type="partial" type="text/x-handlebars">
 <div id="contactCardPartial" data-template-id=contactCardPartial" class="contact-card">
   <h3 class="cardHeading">{{full_name}}</h3>
   <dl>
@@ -34,7 +34,7 @@ const contactCardPartial = /* html */`
 </script>`;
 
 const homeActions = /* html */ `
-<script id="homeActions" type="text/x-handlebars" nonce=''>
+<script id="homeActions" type="text/x-handlebars">
   <div id="homeActions" data-template-id="homeActions" class="home actions">
     <div>
       <a class="navigation btn large add-contact" href="#contacts/new">Add Contact</a>
@@ -61,7 +61,7 @@ const homeActions = /* html */ `
 </script>`;
 
 const contactList = /* html */ `
-<script id="contactList" type="text/x-handlebars" nonce=''>
+<script id="contactList" type="text/x-handlebars">
   {{#if contacts}}
     <div id='contactList' class='contact-list-grid'>
       {{#if contacts.length}}
@@ -92,8 +92,11 @@ class Home extends TemplateWrapper {
     super.draw({ contacts: formatted });
     const tagSearchField = select('#contact-tag-search');
     this.tagAutocomplete = new TagAutocomplete(tagSearchField, this.appState.getTagSet.bind(this.appState));
+    this.bindEvents();
+  }
+
+  bindEvents() {
     select('#contact-name-search').addEventListener('input', this.handleSearchInput.bind(this));
-    // select('#contact-tag-search').addEventListener('input', this.handleSearchInput.bind(this));
     select('#contact-tag-search').addEventListener('autocomplete-updated', this.handleSearchInput.bind(this));
     select('#contactList').addEventListener('click', this.handleDeleteClick.bind(this));
   }
@@ -105,19 +108,12 @@ class Home extends TemplateWrapper {
     this.drawMatchingContacts({ full_name: nameSearchValue, tagArray: tagSearchValue });
   }
 
-  handleTagFieldClear(e) {
-    
-  }
-
   handleDeleteClick(e) {
     if (!e.target.classList.contains('delete')) return;
     e.preventDefault();
     const confirmed = confirm('Are you sure? This operation is irreversible!');
     if (!confirmed) return;
     const { id } = e.target.dataset;
-    // const { value: nameSearchValue } = select('#contact-name-search');
-    // const { value: tagSearchString } = select('#contact-tag-search');
-    // const tagSearchValue = tagSearchString.split(',').map((tag) => tag.trim());
     this.appState.deleteContact(id)
       .then((result) => {
         const parent = selectParent('div.contact-card', e.target);
@@ -134,11 +130,13 @@ class Home extends TemplateWrapper {
     const existingList = select('#contactList');
     if (existingList) existingList.remove();
     let searchValueArr = [];
+
     if (full_name) {
       const namePattern = new RegExp(full_name, 'i');
       contacts = contacts.filter((contact) => namePattern.test(contact.full_name));
       searchValueArr.push(`a name matching "${full_name}"`);
     }
+
     if (tagArray) {
       if (!Array.isArray(tagArray)) throw new TypeError(`Must pass tags as an array!`);
       if (tagArray.length) { 
@@ -151,6 +149,7 @@ class Home extends TemplateWrapper {
         searchValueArr.push(`tag${tagArray.length > 1 ? 's' : ''} "${tagArray}"`);
       }
     }
+
     const formatted = this.appState.formatContacts(contacts);
     const searchValue = searchValueArr.join(' and ');
     const newList = this.findTemplate('contactList')({ contacts: formatted, searchValue });
@@ -163,8 +162,6 @@ class Home extends TemplateWrapper {
     const values = elementIds.reduce((combined, id) => {
       return Object.assign(combined, super.getValues(id));
     }, {});
-    // const values = { ...selectAll('[value]', this.templates)
-    // .reduce((acc, element) => Object.assign(acc, { [element.id]: element.value }), {});
     values.tags = this.tagAutocomplete.getInputValue();
     return values;
   }

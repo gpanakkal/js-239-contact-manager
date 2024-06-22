@@ -63,7 +63,6 @@ const queryString = (formObj) => {
     return acc.concat(`${key}=${value}`)}, '');
 }
 
-
 const rollOverAccess = (arr, i) => {
   let index = (i % arr.length);
   if (index < 0) index = arr.length + index;

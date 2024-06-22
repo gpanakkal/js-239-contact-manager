@@ -1,10 +1,7 @@
-import { selectAll } from "../lib/helpers.js";
 import HistoryManager from "./HistoryManager.js";
 import TemplateWrapper from "./TemplateWrapper.js";
 
-/* Router for page navigation via hash URLs
-
-*/
+/* Router for page navigation via hash URLs */
 export default class Router {
   static #getPath = (url) =>  url.hash || url.pathname;
 
@@ -44,11 +41,6 @@ export default class Router {
       const historyUrl = this.historyManager.getStoredUrl();
       const urlRaw = historyUrl ?? window.location.href;
       const { route, params } = this.#getRouteFromUrl(urlRaw);
-
-      // const url = new URL(urlRaw);
-      // const path = Router.#getPath(url);
-      // const route = this.#matchRoute(path);
-      // const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
       this.#draw(this.routes[route], params);
     });
   }
@@ -76,18 +68,12 @@ export default class Router {
 
   // given a nav path, finds the corresponding route
   #matchRoute(navPath) {
-    const match = this.routePatterns.find(({ pattern, route }) => {
-      return pattern.test(navPath);
-    });
-    console.log({navPath, match })
+    const match = this.routePatterns.find(({ pattern }) => pattern.test(navPath));
     if (!match) return null;
-    const route = match.path;
-    return route;
+    return match.path;
   }
 
-  #bindNavigationEvents() {
-    // const navLinks = selectAll('.navigation');
-    
+  #bindNavigationEvents() {    
     document.removeEventListener('appnavigation', this.boundCustomNavHandler);
     document.addEventListener('appnavigation', this.boundCustomNavHandler);
     this.container.removeEventListener('click', this.boundClickHandler);
@@ -113,8 +99,6 @@ export default class Router {
     const isNavLink = e.target.classList.contains('navigation') 
       && e.target.tagName === 'A';
     if (!isNavLink) return; 
-    // console.log(e);
-    // console.log("clicked navlink")
     e.preventDefault();
     const path = e.target.getAttribute('href');
     const route = this.#matchRoute(path);
@@ -123,9 +107,8 @@ export default class Router {
 
   // draw the templates corresponding to the path and update the history
   #navTo(path, route) {
-    // get the current route to define how to extract values from the page
     const currentUrl = window.location;
-    const { route: currentRoute, params: currentParams } = this.#getRouteFromUrl(currentUrl);
+    const { route: currentRoute } = this.#getRouteFromUrl(currentUrl);
     const pageValues = this.#getPageValues(this.routes[currentRoute]);
     this.historyManager.setEntry(pageValues, { update: true });
 
@@ -139,19 +122,13 @@ export default class Router {
     const path = window.location.hash;
     const route = this.#matchRoute(path || '/');
     const params = /:/.test(route) ? Router.#extractParams(path, route) : { };
-    // console.log({params, path, route})
-    // const pageValues = this.#getPageValues();
-    // this.#setCurrentHistory();
     this.historyManager.setEntry(null, { update: false });
     const nextPage = this.routes[route];
-    // console.log({nextPage})
-    this.#draw(this.routes[route], params);
+    this.#draw(nextPage, params);
   }
 
-  // revise to call corresponding method on each passed route's wrapperArray
   #getPageValues(wrapperArray) {
     return wrapperArray.map((wrapper) => wrapper.getValues())
-    // return selectAll('[value]', this.container)
     .reduce((acc, elementValues) => Object.assign(acc, elementValues), {});
   }
 

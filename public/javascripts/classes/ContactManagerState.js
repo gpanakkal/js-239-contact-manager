@@ -5,11 +5,9 @@ import { formatNumber, hashIterable } from "../lib/helpers.js";
 export default class ContactManagerState {
   #contacts = [];
 
-  async getContacts() {
-    if (this.#contacts.length === 0) {
-      await this.#fetchContacts();
-    }
-    return this.#contacts.slice();
+  async #fetchContacts() {
+    const fetched = await contactAPI.fetchContacts();
+    this.#setLocalContacts(fetched);
   }
 
   #setLocalContacts(contacts) {
@@ -23,16 +21,18 @@ export default class ContactManagerState {
     this.#setLocalContacts(updated);
   }
 
-  async #fetchContacts() {
-    const fetched = await contactAPI.fetchContacts();
-    this.#setLocalContacts(fetched);
+  async getContacts() {
+    if (this.#contacts.length === 0) {
+      await this.#fetchContacts();
+    }
+    return this.#contacts.slice();
   }
 
   async findContact(id) {
     return (await this.getContacts()).find((contact) => String(contact.id) === String(id));
   }
 
-  // format fields for text display
+  // format data for display on the page
   formatContacts(contacts) {
     return contacts.map((contact) => {
       const formatted = {
@@ -67,10 +67,8 @@ export default class ContactManagerState {
 
   async deleteContact(id) {
     const deleteResult = await contactAPI.deleteContact(id);
-    console.log({deleteResult});
     if (deleteResult !== null) {
       const remaining = this.#contacts.filter((contact) => String(contact.id) !== String(id));
-      console.table(remaining)
       this.#setLocalContacts(remaining);
     }
     return deleteResult;

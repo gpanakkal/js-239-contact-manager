@@ -1,4 +1,4 @@
-import ContactForm from "./ContactForm.js";
+import ContactForm from "../classes/ContactForm.js";
 
 class EditContactForm extends ContactForm {
   constructor(insertionCallback, appState) {

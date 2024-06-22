@@ -38,7 +38,6 @@ export default class HistoryManager {
     currentPageState.currentPage = Object.assign(base, pageValues);
 
     history.replaceState(currentPageState, '', window.location.toString());
-    console.log(`Set this page's history`, history.state, history.state.href); // temporary
   }
 
   /**
@@ -46,22 +45,16 @@ export default class HistoryManager {
    * state object to be stored on the previousPageState property.
    * Invoked when navigating without using the forward/back buttons.
    */
-  createEntry(path) {    // set up the state object for the next page with a reference to the current page
+  createEntry(path) {
+    // set up the state object for the next page with a reference to the current page
     const currentPageState = history.state;
     const newHref = new URL(path, this.origin).toString();
     const nextPageState = this.#initEntry(currentPageState, newHref, null, null)
-    // {
-    //   previousPage: currentPageState,
-    //   pageData: params,
-    //   href: newHref,
-    //   nextPage: null,
-    // };
-    // create a reference to the next page
+
+    // set a reference to the next page
     currentPageState.nextPage = nextPageState;
     // save state entries
     history.replaceState(currentPageState, '', window.location.toString());
     history.pushState(nextPageState, '', newHref);
-    console.log(`Updated this page's history`, currentPageState, currentPageState.href);
-    console.log(`Navigating to this page with history: `, nextPageState, nextPageState.href);
   }
 }

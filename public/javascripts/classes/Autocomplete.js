@@ -41,7 +41,7 @@ export default class Autocomplete {
     this.overlay.style.display = 'none';
   }
 
-// #region EVENTS AND HANDLERS
+  // #region EVENTS AND HANDLERS
   bindEvents() {
     this.input.addEventListener('beforeinput', this.controlInput.bind(this));
     this.input.addEventListener('input', this.handleTextInput.bind(this));
@@ -70,17 +70,26 @@ export default class Autocomplete {
     const keyActions = {
       'ArrowDown': (e) => {
         e.preventDefault();
-        const next = this.highlightedOption.nextElementSibling ?? this.listUI.firstElementChild;
-        this.setBestMatch(next);
-        this.highlightMatch();
+        if(!this.UIVisible()) {
+          this.drawOptions();
+        } else {
+          const next = this.highlightedOption.nextElementSibling ?? this.listUI.firstElementChild;
+          this.setBestMatch(next);
+          this.highlightMatch();
+        }
       },
       'ArrowUp': (e) => {
         e.preventDefault();
-        const prev = this.highlightedOption.previousElementSibling ?? this.listUI.lastElementChild;
-        this.setBestMatch(prev);
-        this.highlightMatch();
+        if(!this.UIVisible()) {
+          this.drawOptions();
+        } else {
+          const prev = this.highlightedOption.previousElementSibling ?? this.listUI.lastElementChild;
+          this.setBestMatch(prev);
+          this.highlightMatch();
+        }
       },
       'Tab': (e) => {
+        if(!this.UIVisible()) return;
         if (e.shiftKey) return;
         if (!this.highlightedOption) return;
         e.preventDefault();
@@ -88,14 +97,16 @@ export default class Autocomplete {
         this.clearUI();
       },
       'Escape': (e) => {
+        if(!this.UIVisible()) return;
         this.restoreBackupValue();
       },
       'Enter': (e) => {
+        if(!this.UIVisible()) return;
         this.clearUI();
       }, // this permits form submit since it doesn't prevent default
     }
     
-    if (this.UIVisible() && e.key in keyActions) {
+    if (e.key in keyActions) {
       keyActions[e.key](e);
     }
   }
@@ -126,8 +137,9 @@ export default class Autocomplete {
       this.drawOverlay();
     }
   }
-// #endregion
+  // #endregion
 
+  // #region INPUT VALUE MANAGEMENT
   getInputValue() {
     return this.input.value ?? '';
   }
@@ -152,7 +164,9 @@ export default class Autocomplete {
     this.dispatchUpdateEvent();
     this.resetUI();
   }
+  // #endregion
 
+  // #region UI MANAGEMENT
   async drawOptions() {
     const optionValues = [...await this.optionsLoader()];
     const matches = this.matchingOptions(optionValues);
@@ -235,4 +249,5 @@ export default class Autocomplete {
     this.resetOverlay();
     this.listUI.setAttribute('visible', 'false');
   }
+  // #endregion
 }

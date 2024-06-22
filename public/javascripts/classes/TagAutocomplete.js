@@ -18,6 +18,7 @@ export default class TagAutocomplete extends Autocomplete {
       && option.toLowerCase().startsWith(lower));
   }
 
+  // #region INPUT VALUE MANAGEMENT
   tagStringToArray(tagString) {
     return tagString.split(',').map((tag) => tag.trim());
   }
@@ -26,7 +27,6 @@ export default class TagAutocomplete extends Autocomplete {
     return tagArray.map((tag) => tag.trim()).join(', ');
   }
 
-  // split it into an array
   getInputValue() {
     return this.input.value ? this.tagStringToArray(this.input.value) : [];
   }
@@ -62,12 +62,12 @@ export default class TagAutocomplete extends Autocomplete {
     const inputSet = new InputEvent('input', { bubbles: true });
     this.input.dispatchEvent(inputSet);
   }
+  // #endregion
 
-  // prevent consecutive commas and auto insert commas when hitting space
+  // prevent or modify certain inputs
   controlInput(e) {
     const currentTagArray = this.getInputValue();
     const currentValueString = this.input.value;
-    console.info({ beforeInputData: e.data, event: e })
     const prevCharIsComma = /,\s*$/.test(currentValueString);
     const improperSpaces = /,(\S|\s{2,})/.test(currentValueString);
     const inputIsSpace = /^\s+$/.test(e.data);
@@ -102,8 +102,6 @@ export default class TagAutocomplete extends Autocomplete {
       e.preventDefault();
       this.setInputValue(['']);
       this.clearUI();
-      // this.drawOptions();
-      // this.dispatchUpdateEvent();
     } 
   }
 

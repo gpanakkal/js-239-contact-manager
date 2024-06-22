@@ -1,12 +1,12 @@
 import { htmlToElements, select, selectAll } from '../lib/helpers.js';
 
-/* A wrapper class for sequences of Handlebars templates that collectively represent a single page. */
+/* A wrapper class for sequences of Handlebars templates that collectively represent a section of a page. */
 export default class TemplateWrapper {
   constructor (templateStrings, insertionCallback, appState) {
     this.templates = [];
     this.insertionCallback = insertionCallback; // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)
     this.appState = appState;
-    this.templates = []; // templateStrings.map(TemplateWrapper.#createTemplate);
+    this.templates = [];
     this.#initHandlebars(templateStrings);
   }
 
@@ -26,7 +26,6 @@ export default class TemplateWrapper {
   draw(elementValues, useHistory = true) {
     const historyState = useHistory ? history.state?.pageData : {};
     const fullValues = Object.assign({}, elementValues, historyState);
-    // console.log({fullValues, caller: this}); // temporary
     for (let i = 0; i < this.templates.length; i += 1) {
       const html = this.templates[i].compiled(fullValues);
       // insert the element into the DOM using the insertion callback

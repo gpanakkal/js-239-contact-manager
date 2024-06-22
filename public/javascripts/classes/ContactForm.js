@@ -1,9 +1,9 @@
-import TagAutocomplete from "../classes/TagAutocomplete.js";
-import TemplateWrapper from "../classes/TemplateWrapper.js";
+import TagAutocomplete from "./TagAutocomplete.js";
+import TemplateWrapper from "./TemplateWrapper.js";
 import { select, selectAll } from "../lib/helpers.js";
 
 const contactForm = /* html */ `
-<script id="contactForm" type="text/x-handlebars" nonce=''>
+<script id="contactForm" type="text/x-handlebars">
   <h2 class='page-header'>
     {{#if contact}}Edit{{else}}Create{{/if}} Contact
   </h2>
@@ -39,17 +39,13 @@ const contactForm = /* html */ `
 </script>`;
 
 const contactFormHint = /* html */ `
-<script id="contactFormHint" type="text/x-handlebars" nonce=''>
+<script id="contactFormHint" type="text/x-handlebars">
   <small class="form-hint">{{message}}</small>
 </script>`;
 
 export default class ContactForm extends TemplateWrapper {
   constructor(insertionCallback, appState) {
     super([contactForm, contactFormHint], insertionCallback, appState);
-  }
-
-  bindContactFormEvents() {
-    this.form.addEventListener('submit', this.#handleFormSubmit.bind(this));
   }
 
   async draw(contact, useHistory) {
@@ -60,15 +56,17 @@ export default class ContactForm extends TemplateWrapper {
     select('#full_name').focus();
   }
 
+  bindContactFormEvents() {
+    this.form.addEventListener('submit', this.#handleFormSubmit.bind(this));
+  }
+
   #handleFormSubmit(e) {
-    // alert(e);
     e.preventDefault();
     const formObj = Object.fromEntries(new FormData(e.currentTarget));
     const formattedFormObj = this.#formatFormValues(formObj);
     const failedConditions = this.#validateContactForm(formattedFormObj);
     this.#resetFormHints(e.currentTarget);
     if (failedConditions.length) {
-      // alert(`Failed conditions: ${failedConditions.map(([field, obj]) => obj.message).join(', ')}`)
       this.#drawFormHints(e.currentTarget, failedConditions);
       return false;
     }
@@ -76,17 +74,13 @@ export default class ContactForm extends TemplateWrapper {
   }
 
   
-  // process tags into csv by taking every instance of '\s*,\s*' and replacing it with ','
   #formatFormValues(formObj) {
     const formatted = { ...formObj };
     formatted.full_name = formObj.full_name.trim();
-    // formatted.tags 
-    // formatted.tags = formObj.tags.trim().split(',').map((tag) => tag.trim()).filter((tag) => tag.length);
     formatted.tags = this.tagAutocomplete.formatInputValue();
     return formatted;
   }
 
-  // customElement - contactForm
   #validateContactForm(formObj) {
     const namePattern = /^(\s*([\w-]+)(\s+[\w-]+)*\s*)?$/;
     const phoneNumberPattern = /^(\s*)(\+\d{1,2})?([\s-]?)(\(?)(\d{3})(\)?)[\s-]?(\d{3})[\s-]?(\d{4})\s*$/;
@@ -125,8 +119,6 @@ export default class ContactForm extends TemplateWrapper {
   }
 
   #drawFormHints(form, conditions) {
-    // this.#resetFormHints(form);
-
     const hint = this.findTemplate('contactFormHint');
     conditions.forEach(({ key, message }) => {
       const location = form.querySelector(`label[for="${key}"]`).nextElementSibling;
@@ -147,7 +139,6 @@ export default class ContactForm extends TemplateWrapper {
     const result = await (formObj.id 
       ? this.appState.editContact(formObj) 
       : this.appState.createContact(formObj));
-    // await result;
     const navHome = new CustomEvent('appnavigation', { detail: '/' });
     document.dispatchEvent(navHome);
   }
@@ -159,5 +150,3 @@ export default class ContactForm extends TemplateWrapper {
     return values;
   }
 }
-
-// export default ((insertionCallback, appState) => new ContactForm(insertionCallback, appState));

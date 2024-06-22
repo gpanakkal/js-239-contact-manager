@@ -1,7 +1,20 @@
-# js-239-contact-manager
+# Contact Manager
 
-To run the app, execute `npm i; npm start`. Access it via `localhost:3000`, or directly access paths such as `localhost:3000/#contacts/new`.
+This is a practice project for [Launch School](https://launchschool.com/).
+
+To run the app, execute `npm i; npm start`. Access it via `localhost:3000`, or directly access subroutes such as `localhost:3000/#contacts/new`.
+
+## Features
+
+This app uses Handlebars for templating and the History API to enable forward, backwards, and direct route navigation.
+
+The tag search function has several shortcuts:
+- `Tab` autofills the highlighted option, if any.
+- `Escape` reverts autofilled input.
+- `Enter` closes the suggestion list.
+- `Backspace` deletes the latest tag; `Ctrl` + `Backspace` will empty the field.
+- The up and down arrow keys navigate the list, or bring it up if it isn't already displayed.
 
 ## Reading the Code
 
-HTML templates in `/public/javascripts/templates` are easier to read with the [Comment tagged templates](https://marketplace.visualstudio.com/items?itemName=bierner.comment-tagged-templates) extension for VSCode.
+This project uses a template wrapper to encapsulate webpage logic and markup. HTML templates in `/public/javascripts/templates` can be highlighted as HTML by using the [Comment tagged templates](https://marketplace.visualstudio.com/items?itemName=bierner.comment-tagged-templates) extension for VSCode.

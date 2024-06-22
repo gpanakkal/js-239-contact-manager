@@ -1,15 +1,5 @@
 [
   {
-    "id": 2,
-    "full_name": "Victor Reyes",
-    "email": "vpr@example.ca",
-    "phone_number": "(323) 654-3210",
-    "tags": [
-      "work",
-      "friend"
-    ]
-  },
-  {
     "full_name": "Adrian Clark",
     "phone_number": "+1 (971) 941-1886",
     "email": "adrian.clark@example.com",
@@ -107,5 +97,15 @@
     "email": "warren.ross@example.com",
     "tags": [],
     "id": 32
+  },
+  {
+    "full_name": "Lillian North",
+    "phone_number": "(213) 309-8435 ",
+    "email": "",
+    "tags": [
+      "friend",
+      "work"
+    ],
+    "id": 33
   }
 ]
