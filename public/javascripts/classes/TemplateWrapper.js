@@ -9,7 +9,6 @@ export default class TemplateWrapper {
     this.insertionCallback = insertionCallback;
     // e.g., (html) => parentElement.insertAdjacentHTML('beforeend', html)
     this.appState = appState;
-    this.templates = [];
     this.#initHandlebars(templateStrings);
   }
 
