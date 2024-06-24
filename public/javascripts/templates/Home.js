@@ -145,7 +145,7 @@ class Home extends TemplateWrapper {
     const searchValueArr = [];
 
     if (full_name) {
-      const namePattern = new RegExp(full_name, 'i');
+      const namePattern = new RegExp(`^${full_name}`, 'i');
       contacts = contacts.filter((contact) => namePattern.test(contact.full_name));
       searchValueArr.push(`a name matching "${full_name}"`);
     }
